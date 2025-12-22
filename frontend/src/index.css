@@ -4,6 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark theme (default) */
 :root {
   --background: 0 0% 2%;
   --foreground: 0 0% 93%;
@@ -15,16 +16,63 @@
   --primary-foreground: 0 0% 0%;
   --secondary: 348 100% 50%;
   --secondary-foreground: 0 0% 100%;
-  --muted: 0 0% 7%;
+  --muted: 0 0% 10%;
   --muted-foreground: 0 0% 53%;
   --accent: 187 100% 50%;
   --accent-foreground: 0 0% 0%;
   --destructive: 348 100% 50%;
   --destructive-foreground: 0 0% 100%;
-  --border: 0 0% 13%;
-  --input: 0 0% 13%;
+  --border: 0 0% 15%;
+  --input: 0 0% 15%;
   --ring: 153 100% 50%;
   --radius: 0.25rem;
+  
+  /* Custom */
+  --cyber-bg: #050505;
+  --cyber-surface: #0A0A0A;
+  --cyber-highlight: #111111;
+  --cyber-primary: #00FF94;
+  --cyber-primary-dim: #00cc76;
+  --cyber-secondary: #FF003C;
+  --cyber-accent: #00F0FF;
+  --cyber-text: #EDEDED;
+  --cyber-muted: #888888;
+  --cyber-border: #222222;
+}
+
+/* Light theme */
+.light {
+  --background: 0 0% 98%;
+  --foreground: 0 0% 10%;
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 10%;
+  --primary: 153 80% 35%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 348 80% 45%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 0 0% 95%;
+  --muted-foreground: 0 0% 45%;
+  --accent: 187 80% 40%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 348 80% 50%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 85%;
+  --input: 0 0% 85%;
+  --ring: 153 80% 35%;
+  
+  /* Custom light */
+  --cyber-bg: #f8f9fa;
+  --cyber-surface: #ffffff;
+  --cyber-highlight: #f1f3f4;
+  --cyber-primary: #00a65a;
+  --cyber-primary-dim: #008c4a;
+  --cyber-secondary: #dc3545;
+  --cyber-accent: #0099cc;
+  --cyber-text: #1a1a1a;
+  --cyber-muted: #6c757d;
+  --cyber-border: #dee2e6;
 }
 
 * {
@@ -36,8 +84,8 @@ body {
   font-family: 'Rajdhani', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #050505;
-  color: #EDEDED;
+  background-color: var(--cyber-bg);
+  color: var(--cyber-text);
 }
 
 code {
@@ -51,16 +99,16 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0A0A0A;
+  background: var(--cyber-surface);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #222222;
+  background: var(--cyber-border);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #00FF94;
+  background: var(--cyber-primary);
 }
 
 /* Custom utility classes */
@@ -76,6 +124,23 @@ code {
   .border-glow-red {
     box-shadow: 0 0 10px rgba(255, 0, 60, 0.3), 0 0 20px rgba(255, 0, 60, 0.1);
   }
+  
+  .bg-cyber-bg { background-color: var(--cyber-bg); }
+  .bg-cyber-surface { background-color: var(--cyber-surface); }
+  .bg-cyber-highlight { background-color: var(--cyber-highlight); }
+  .bg-cyber-primary { background-color: var(--cyber-primary); }
+  .bg-cyber-secondary { background-color: var(--cyber-secondary); }
+  .bg-cyber-accent { background-color: var(--cyber-accent); }
+  
+  .text-cyber-primary { color: var(--cyber-primary); }
+  .text-cyber-secondary { color: var(--cyber-secondary); }
+  .text-cyber-accent { color: var(--cyber-accent); }
+  .text-cyber-text { color: var(--cyber-text); }
+  .text-cyber-muted { color: var(--cyber-muted); }
+  
+  .border-cyber-border { border-color: var(--cyber-border); }
+  .border-cyber-primary { border-color: var(--cyber-primary); }
+  .border-cyber-secondary { border-color: var(--cyber-secondary); }
 }
 
 @layer base {
@@ -85,23 +150,4 @@ code {
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Scanlines effect */
-.scanlines::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    rgba(0, 0, 0, 0.05),
-    rgba(0, 0, 0, 0.05) 1px,
-    transparent 1px,
-    transparent 2px
-  );
-  pointer-events: none;
-  z-index: 100;
 }
