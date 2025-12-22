@@ -240,14 +240,16 @@ export default function Dashboard() {
             <div className="space-y-2">
               <Label className="text-xs uppercase tracking-widest text-cyber-muted">Attack Method</Label>
               <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger data-testid="attack-method" className="bg-cyber-highlight border-cyber-border text-cyber-text">
+                <SelectTrigger data-testid="attack-method" className="bg-cyber-highlight border-cyber-border text-cyber-text relative z-10">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
-                <SelectContent className="bg-cyber-surface border-cyber-border">
+                <SelectContent className="bg-cyber-surface border-cyber-border" style={{ zIndex: 9999 }}>
                   {availableMethods.map((m) => (
-                    <SelectItem key={m.id} value={m.id} className="text-cyber-text hover:bg-cyber-highlight">
-                      <span className="font-code">{m.name}</span>
-                      <span className="text-xs text-cyber-muted ml-2">- {m.description}</span>
+                    <SelectItem key={m.id} value={m.id} className="text-cyber-text hover:bg-cyber-highlight cursor-pointer" data-testid={`method-${m.id}`}>
+                      <div className="flex flex-col">
+                        <span className="font-code">{m.name}</span>
+                        <span className="text-xs text-cyber-muted">{m.description}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
