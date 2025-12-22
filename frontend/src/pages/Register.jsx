@@ -44,10 +44,9 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-panel flex items-center justify-center p-4">
-      {/* Theme toggle */}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="absolute top-4 right-4 z-20">
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-panel-muted hover:text-panel-primary rounded-lg">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-slate-400 hover:text-blue-500 rounded-lg">
           {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </Button>
       </div>
@@ -58,59 +57,57 @@ export default function Register() {
         transition={{ duration: 0.4 }}
         className="w-full max-w-md"
       >
-        {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-panel-primary flex items-center justify-center">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-panel">Stresser<span className="text-panel-primary">.io</span></span>
+            <span className="text-2xl font-bold text-slate-100">Layer7<span className="text-blue-500">Top</span></span>
           </Link>
-          <p className="text-panel-muted">Create your account</p>
+          <p className="text-slate-400">Create your account</p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-panel-surface rounded-2xl border border-panel p-8">
+        <div className="bg-slate-900 rounded-2xl border border-slate-800 p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-sm text-panel-muted">Username</Label>
+              <Label className="text-sm text-slate-400">Username</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-panel-muted" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <Input
                   data-testid="register-username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Choose username"
-                  className="pl-11 h-12 bg-panel-hover border-panel text-panel rounded-xl focus:ring-2 focus:ring-panel-primary"
+                  className="pl-11 h-12 bg-slate-800 border-slate-700 text-slate-100 rounded-xl"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label className="text-sm text-panel-muted">Password</Label>
+              <Label className="text-sm text-slate-400">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-panel-muted" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <Input
                   data-testid="register-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Choose password"
-                  className="pl-11 h-12 bg-panel-hover border-panel text-panel rounded-xl focus:ring-2 focus:ring-panel-primary"
+                  className="pl-11 h-12 bg-slate-800 border-slate-700 text-slate-100 rounded-xl"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label className="text-sm text-panel-muted">Telegram ID</Label>
+              <Label className="text-sm text-slate-400">Telegram ID</Label>
               <div className="relative">
-                <SiTelegram className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-panel-muted" />
+                <SiTelegram className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
                 <Input
                   data-testid="register-telegram"
                   value={telegramId}
                   onChange={(e) => setTelegramId(e.target.value)}
                   placeholder="@username or ID"
-                  className="pl-11 h-12 bg-panel-hover border-panel text-panel rounded-xl focus:ring-2 focus:ring-panel-primary"
+                  className="pl-11 h-12 bg-slate-800 border-slate-700 text-slate-100 rounded-xl"
                 />
               </div>
             </div>
@@ -119,7 +116,7 @@ export default function Register() {
               data-testid="register-submit"
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-panel-primary hover:bg-panel-primary/90 text-white font-semibold rounded-xl"
+              className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -130,9 +127,9 @@ export default function Register() {
           </form>
           
           <div className="mt-6 text-center">
-            <p className="text-panel-muted text-sm">
+            <p className="text-slate-400 text-sm">
               Already have an account?{" "}
-              <Link to="/login" className="text-panel-primary hover:underline font-medium">
+              <Link to="/login" className="text-blue-500 hover:underline font-medium">
                 Sign in
               </Link>
             </p>

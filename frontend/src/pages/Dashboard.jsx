@@ -19,7 +19,6 @@ export default function Dashboard() {
   const [plans, setPlans] = useState({});
   const [runningAttacks, setRunningAttacks] = useState([]);
   
-  // Attack form
   const [target, setTarget] = useState("");
   const [port, setPort] = useState(80);
   const [method, setMethod] = useState("");
@@ -71,13 +70,7 @@ export default function Dashboard() {
     
     setLoading(true);
     try {
-      await axios.post(`${API}/attacks`, {
-        target,
-        port,
-        method,
-        duration,
-        concurrents
-      }, {
+      await axios.post(`${API}/attacks`, { target, port, method, duration, concurrents }, {
         headers: { Authorization: `Bearer ${token}` }
       });
       toast.success("Attack started!");
@@ -106,78 +99,75 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div data-testid="dashboard" className="space-y-8">
-        {/* Header */}
+      <div data-testid="dashboard" className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-3xl font-bold text-cyber-text tracking-tight">ATTACK PANEL</h1>
-            <p className="text-cyber-muted mt-1">Launch Layer 7 stress tests</p>
+            <h1 className="text-2xl font-bold text-slate-100">Attack Panel</h1>
+            <p className="text-slate-400 text-sm mt-1">Launch Layer 7 stress tests</p>
           </div>
-          <div className="flex items-center gap-2 px-4 py-2 bg-cyber-surface border border-cyber-border">
-            <div className="w-2 h-2 rounded-full bg-cyber-primary animate-pulse" />
-            <span className="font-code text-sm text-cyber-primary uppercase">{user?.plan} Plan</span>
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-lg">
+            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span className="font-mono text-sm text-blue-500 uppercase">{user?.plan} Plan</span>
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-cyber-surface border border-cyber-border p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-cyber-primary" />
+              <Clock className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="text-xs text-cyber-muted uppercase">Max Time</p>
-                <p className="font-code text-xl text-cyber-text">{currentPlan.max_time}s</p>
+                <p className="text-xs text-slate-500 uppercase">Max Time</p>
+                <p className="font-mono text-xl text-slate-100">{currentPlan.max_time}s</p>
               </div>
             </div>
           </div>
-          <div className="bg-cyber-surface border border-cyber-border p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <Users className="w-5 h-5 text-cyber-accent" />
+              <Users className="w-5 h-5 text-cyan-500" />
               <div>
-                <p className="text-xs text-cyber-muted uppercase">Max Concurrent</p>
-                <p className="font-code text-xl text-cyber-text">{currentPlan.max_concurrent}</p>
+                <p className="text-xs text-slate-500 uppercase">Max Concurrent</p>
+                <p className="font-mono text-xl text-slate-100">{currentPlan.max_concurrent}</p>
               </div>
             </div>
           </div>
-          <div className="bg-cyber-surface border border-cyber-border p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <Zap className="w-5 h-5 text-cyber-secondary" />
+              <Zap className="w-5 h-5 text-amber-500" />
               <div>
-                <p className="text-xs text-cyber-muted uppercase">Methods</p>
-                <p className="font-code text-xl text-cyber-text">{currentPlan.methods?.length || 0}</p>
+                <p className="text-xs text-slate-500 uppercase">Methods</p>
+                <p className="font-mono text-xl text-slate-100">{currentPlan.methods?.length || 0}</p>
               </div>
             </div>
           </div>
-          <div className="bg-cyber-surface border border-cyber-border p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-xl p-4">
             <div className="flex items-center gap-3">
-              <Activity className="w-5 h-5 text-cyber-primary" />
+              <Activity className="w-5 h-5 text-emerald-500" />
               <div>
-                <p className="text-xs text-cyber-muted uppercase">Running</p>
-                <p className="font-code text-xl text-cyber-text">{runningAttacks.length}</p>
+                <p className="text-xs text-slate-500 uppercase">Running</p>
+                <p className="font-mono text-xl text-slate-100">{runningAttacks.length}</p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Running Attacks */}
         {runningAttacks.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-cyber-surface border border-cyber-primary/30 p-6"
+            className="bg-slate-900 border border-emerald-500/30 rounded-xl p-6"
           >
-            <h2 className="font-heading text-lg text-cyber-primary mb-4 flex items-center gap-2">
+            <h2 className="text-lg font-semibold text-emerald-500 mb-4 flex items-center gap-2">
               <Activity className="w-5 h-5 animate-pulse" />
-              RUNNING ATTACKS
+              Running Attacks
             </h2>
             <div className="space-y-3">
               {runningAttacks.map((attack) => (
-                <div key={attack.id} className="flex items-center justify-between bg-cyber-highlight p-4 border border-cyber-border">
+                <div key={attack.id} className="flex items-center justify-between bg-slate-800 p-4 rounded-lg border border-slate-700">
                   <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-cyber-primary animate-glow" />
+                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                     <div>
-                      <p className="font-code text-cyber-text">{attack.target}:{attack.port}</p>
-                      <p className="text-xs text-cyber-muted">{attack.method} • {attack.duration}s • {attack.concurrents} threads</p>
+                      <p className="font-mono text-slate-100">{attack.target}:{attack.port}</p>
+                      <p className="text-xs text-slate-500">{attack.method} • {attack.duration}s • {attack.concurrents} threads</p>
                     </div>
                   </div>
                   <Button
@@ -185,10 +175,10 @@ export default function Dashboard() {
                     onClick={() => handleStop(attack.id)}
                     variant="ghost"
                     size="sm"
-                    className="text-cyber-secondary hover:bg-cyber-secondary/10"
+                    className="text-red-500 hover:bg-red-500/10"
                   >
                     <Square className="w-4 h-4 mr-2" />
-                    STOP
+                    Stop
                   </Button>
                 </div>
               ))}
@@ -196,78 +186,71 @@ export default function Dashboard() {
           </motion.div>
         )}
 
-        {/* Attack Form */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-cyber-surface border border-cyber-border p-6 relative"
+          className="bg-slate-900 border border-slate-800 rounded-xl p-6"
         >
-          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyber-primary" />
-          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyber-primary" />
-          
-          <h2 className="font-heading text-xl font-bold text-cyber-text mb-6 flex items-center gap-3">
-            <Target className="w-6 h-6 text-cyber-primary" />
-            LAUNCH ATTACK
+          <h2 className="text-xl font-bold text-slate-100 mb-6 flex items-center gap-3">
+            <Target className="w-6 h-6 text-blue-500" />
+            Launch Attack
           </h2>
 
           <form onSubmit={handleAttack} className="space-y-6">
-            {/* Target & Port */}
             <div className="grid md:grid-cols-3 gap-4">
               <div className="md:col-span-2 space-y-2">
-                <Label className="text-xs uppercase tracking-widest text-cyber-muted">Target URL / IP</Label>
+                <Label className="text-xs uppercase tracking-wider text-slate-500">Target URL / IP</Label>
                 <Input
                   data-testid="attack-target"
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
                   placeholder="https://example.com or 192.168.1.1"
-                  className="bg-cyber-highlight border-cyber-border focus:border-cyber-primary text-cyber-text font-code"
+                  className="bg-slate-800 border-slate-700 text-slate-100 font-mono rounded-lg"
                 />
               </div>
               <div className="space-y-2">
-                <Label className="text-xs uppercase tracking-widest text-cyber-muted">Port</Label>
+                <Label className="text-xs uppercase tracking-wider text-slate-500">Port</Label>
                 <Input
                   data-testid="attack-port"
                   type="number"
                   value={port}
                   onChange={(e) => setPort(parseInt(e.target.value) || 80)}
-                  className="bg-cyber-highlight border-cyber-border focus:border-cyber-primary text-cyber-text font-code"
+                  className="bg-slate-800 border-slate-700 text-slate-100 font-mono rounded-lg"
                 />
               </div>
             </div>
 
-            {/* Method */}
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-cyber-muted">Attack Method</Label>
+              <Label className="text-xs uppercase tracking-wider text-slate-500">Attack Method</Label>
               <Select value={method} onValueChange={setMethod}>
-                <SelectTrigger data-testid="attack-method" className="bg-cyber-highlight border-cyber-border text-cyber-text relative z-10">
+                <SelectTrigger data-testid="attack-method" className="bg-slate-800 border-slate-700 text-slate-100 rounded-lg">
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
-                <SelectContent className="bg-cyber-surface border-cyber-border" style={{ zIndex: 9999 }}>
+                <SelectContent className="bg-slate-900 border-slate-700">
                   {availableMethods.map((m) => (
-                    <SelectItem key={m.id} value={m.id} className="text-cyber-text hover:bg-cyber-highlight cursor-pointer" data-testid={`method-${m.id}`}>
+                    <SelectItem key={m.id} value={m.id} className="text-slate-100 hover:bg-slate-800">
                       <div className="flex flex-col">
-                        <span className="font-code">{m.name}</span>
-                        <span className="text-xs text-cyber-muted">{m.description}</span>
+                        <span className="font-mono">{m.name}</span>
+                        <span className="text-xs text-slate-500">{m.description}</span>
                       </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               {availableMethods.length === 0 && (
-                <p className="text-xs text-cyber-secondary flex items-center gap-1">
+                <p className="text-xs text-amber-500 flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   Upgrade your plan to access attack methods
                 </p>
               )}
             </div>
 
-            {/* Duration & Concurrents */}
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs uppercase tracking-widest text-cyber-muted">Duration</Label>
-                  <span className="font-code text-cyber-primary">{duration}s</span>
+                  <Label className="text-xs uppercase tracking-wider text-slate-500">Duration</Label>
+                  <span className="font-mono text-blue-500">{duration}s</span>
                 </div>
                 <Slider
                   data-testid="attack-duration"
@@ -276,14 +259,14 @@ export default function Dashboard() {
                   max={currentPlan.max_time}
                   min={10}
                   step={10}
-                  className="[&_[role=slider]]:bg-cyber-primary [&_[role=slider]]:border-cyber-primary"
+                  className="[&_[role=slider]]:bg-blue-500"
                 />
-                <p className="text-xs text-cyber-muted">Max: {currentPlan.max_time}s</p>
+                <p className="text-xs text-slate-500">Max: {currentPlan.max_time}s</p>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-xs uppercase tracking-widest text-cyber-muted">Concurrents</Label>
-                  <span className="font-code text-cyber-primary">{concurrents}</span>
+                  <Label className="text-xs uppercase tracking-wider text-slate-500">Concurrents</Label>
+                  <span className="font-mono text-blue-500">{concurrents}</span>
                 </div>
                 <Slider
                   data-testid="attack-concurrents"
@@ -292,28 +275,27 @@ export default function Dashboard() {
                   max={currentPlan.max_concurrent}
                   min={1}
                   step={1}
-                  className="[&_[role=slider]]:bg-cyber-primary [&_[role=slider]]:border-cyber-primary"
+                  className="[&_[role=slider]]:bg-blue-500"
                 />
-                <p className="text-xs text-cyber-muted">Max: {currentPlan.max_concurrent}</p>
+                <p className="text-xs text-slate-500">Max: {currentPlan.max_concurrent}</p>
               </div>
             </div>
 
-            {/* Submit */}
             <Button
               data-testid="attack-submit"
               type="submit"
               disabled={loading || !target || !method}
-              className="w-full bg-cyber-primary text-black font-heading font-bold text-lg uppercase tracking-widest hover:bg-cyber-primaryDim hover:shadow-[0_0_20px_rgba(0,255,148,0.5)] transition-all py-6"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg uppercase tracking-wider py-6 rounded-xl"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
-                  <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  LAUNCHING...
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Launching...
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
                   <Zap className="w-5 h-5" />
-                  START ATTACK
+                  Start Attack
                 </span>
               )}
             </Button>
