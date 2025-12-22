@@ -16,6 +16,7 @@ const navItems = [
 
 const adminItems = [
   { path: "/admin", label: "Dashboard", icon: Shield },
+  { path: "/admin/users", label: "Users", icon: User },
   { path: "/admin/servers", label: "Servers", icon: Server },
 ];
 
