@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, useTheme } from "../App";
 import { motion } from "framer-motion";
 import { 
-  Zap, Target, History, CreditCard, User, Shield, LogOut, Menu, X, Moon, Sun, Server
+  Zap, Target, History, CreditCard, User, Shield, LogOut, Menu, X, Moon, Sun, Server, Users
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "./ui/button";
@@ -16,7 +16,7 @@ const navItems = [
 
 const adminItems = [
   { path: "/admin", label: "Dashboard", icon: Shield },
-  { path: "/admin/users", label: "Users", icon: User },
+  { path: "/admin/users", label: "Users", icon: Users },
   { path: "/admin/servers", label: "Servers", icon: Server },
 ];
 
@@ -33,16 +33,16 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-panel flex">
+    <div className="min-h-screen bg-slate-950 flex">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 border-r border-panel bg-panel-surface">
+      <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 border-r border-slate-800 bg-slate-900">
         {/* Logo */}
-        <div className="p-5 border-b border-panel">
+        <div className="p-5 border-b border-slate-800">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-panel-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold text-panel">Stresser<span className="text-panel-primary">.io</span></span>
+            <span className="text-lg font-semibold text-slate-100">Stresser<span className="text-blue-500">.io</span></span>
           </Link>
         </div>
         
@@ -58,8 +58,8 @@ export default function Layout({ children }) {
                 data-testid={`nav-${item.path.slice(1)}`}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${ 
                   isActive
-                    ? "bg-panel-primary/10 text-panel-primary"
-                    : "text-panel-muted hover:text-panel hover:bg-panel-hover"
+                    ? "bg-blue-600/10 text-blue-500"
+                    : "text-slate-400 hover:text-slate-100 hover:bg-slate-800"
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -71,7 +71,7 @@ export default function Layout({ children }) {
           {user?.role === "admin" && (
             <>
               <div className="pt-4 pb-2 px-3">
-                <span className="text-xs uppercase tracking-wider text-panel-muted font-medium">Admin</span>
+                <span className="text-xs uppercase tracking-wider text-slate-500 font-medium">Admin</span>
               </div>
               {adminItems.map((item) => {
                 const Icon = item.icon;
@@ -83,8 +83,8 @@ export default function Layout({ children }) {
                     data-testid={`nav-${item.path.replace(/\//g, '-').slice(1)}`}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-panel-warning/10 text-panel-warning"
-                        : "text-panel-muted hover:text-panel-warning hover:bg-panel-hover"
+                        ? "bg-amber-500/10 text-amber-500"
+                        : "text-slate-400 hover:text-amber-500 hover:bg-slate-800"
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -97,11 +97,11 @@ export default function Layout({ children }) {
         </nav>
         
         {/* User Info */}
-        <div className="p-4 border-t border-panel">
+        <div className="p-4 border-t border-slate-800">
           <div className="mb-4 px-2">
-            <p className="text-xs text-panel-muted">Signed in as</p>
-            <p className="font-medium text-panel truncate">{user?.username}</p>
-            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-panel-primary/10 text-panel-primary mt-1">
+            <p className="text-xs text-slate-500">Signed in as</p>
+            <p className="font-medium text-slate-100 truncate">{user?.username}</p>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-600/10 text-blue-500 mt-1">
               {user?.plan}
             </span>
           </div>
@@ -110,7 +110,7 @@ export default function Layout({ children }) {
               onClick={toggleTheme}
               variant="ghost"
               size="icon"
-              className="text-panel-muted hover:text-panel-primary hover:bg-panel-hover rounded-lg"
+              className="text-slate-400 hover:text-blue-500 hover:bg-slate-800 rounded-lg"
             >
               {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
@@ -118,7 +118,7 @@ export default function Layout({ children }) {
               onClick={handleLogout}
               data-testid="logout-btn"
               variant="ghost"
-              className="flex-1 justify-start gap-2 text-panel-muted hover:text-panel-danger hover:bg-panel-danger/10 rounded-lg"
+              className="flex-1 justify-start gap-2 text-slate-400 hover:text-red-500 hover:bg-red-500/10 rounded-lg"
             >
               <LogOut className="w-5 h-5" />
               Sign out
@@ -128,19 +128,19 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-panel/95 backdrop-blur border-b border-panel">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur border-b border-slate-800">
         <div className="flex items-center justify-between p-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-panel-primary flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-panel">Stresser.io</span>
+            <span className="font-semibold text-slate-100">Stresser.io</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-panel-muted rounded-lg">
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-slate-400 rounded-lg">
               {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
-            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-panel rounded-lg">
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-slate-100 rounded-lg">
               {mobileMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>
@@ -150,7 +150,7 @@ export default function Layout({ children }) {
           <motion.nav
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-4 bg-panel-surface border-b border-panel"
+            className="p-4 bg-slate-900 border-b border-slate-800"
           >
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -159,7 +159,7 @@ export default function Layout({ children }) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-panel-muted hover:text-panel-primary rounded-lg"
+                  className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-blue-500 rounded-lg"
                 >
                   <Icon className="w-5 h-5" />
                   {item.label}
@@ -173,7 +173,7 @@ export default function Layout({ children }) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-panel-muted hover:text-panel-warning rounded-lg"
+                  className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-amber-500 rounded-lg"
                 >
                   <Icon className="w-5 h-5" />
                   {item.label}
@@ -182,7 +182,7 @@ export default function Layout({ children }) {
             })}
             <button
               onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
-              className="flex items-center gap-3 px-3 py-2.5 text-panel-muted hover:text-panel-danger w-full rounded-lg"
+              className="flex items-center gap-3 px-3 py-2.5 text-slate-400 hover:text-red-500 w-full rounded-lg"
             >
               <LogOut className="w-5 h-5" />
               Sign out
