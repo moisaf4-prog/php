@@ -838,6 +838,52 @@ async def admin_update_settings(data: GlobalSettingsUpdate, admin: dict = Depend
     await db.settings.update_one({"type": "global"}, {"$set": update_data})
     return {"message": "Settings updated"}
 
+# ==================== NEWS ====================
+
+@api_router.get("/news")
+async def get_public_news():
+    """Get active news for public display"""
+    news = await db.news.find({"is_active": True}, {"_id": 0}).sort("created_at", -1).to_list(10)
+    return news
+
+@api_router.get("/admin/news")
+async def admin_get_all_news(admin: dict = Depends(get_admin_user)):
+    """Get all news (including inactive)"""
+    news = await db.news.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return news
+
+@api_router.post("/admin/news")
+async def admin_create_news(data: NewsCreate, admin: dict = Depends(get_admin_user)):
+    news_item = {
+        "id": str(uuid.uuid4()),
+        "title": data.title,
+        "content": data.content,
+        "type": data.type,
+        "is_active": data.is_active,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_by": admin["username"]
+    }
+    await db.news.insert_one(news_item)
+    return {"message": "News created", "id": news_item["id"]}
+
+@api_router.put("/admin/news/{news_id}")
+async def admin_update_news(news_id: str, data: NewsUpdate, admin: dict = Depends(get_admin_user)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    result = await db.news.update_one({"id": news_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="News not found")
+    return {"message": "News updated"}
+
+@api_router.delete("/admin/news/{news_id}")
+async def admin_delete_news(news_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.news.delete_one({"id": news_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="News not found")
+    return {"message": "News deleted"}
+
 # ==================== ADMIN - STATS ====================
 
 @api_router.get("/admin/stats")
