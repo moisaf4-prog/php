@@ -123,7 +123,7 @@ PLANS = {
     }
 }
 
-ATTACK_METHODS = [
+DEFAULT_ATTACK_METHODS = [
     {"id": "HTTP-GET", "name": "HTTP GET Flood", "description": "Layer 7 GET request flood", "placeholders": ["{target}", "{port}", "{duration}", "{threads}"]},
     {"id": "HTTP-POST", "name": "HTTP POST Flood", "description": "Layer 7 POST request flood", "placeholders": ["{target}", "{port}", "{duration}", "{threads}"]},
     {"id": "HTTP-HEAD", "name": "HTTP HEAD", "description": "Layer 7 HEAD request flood", "placeholders": ["{target}", "{port}", "{duration}", "{threads}"]},
@@ -133,6 +133,15 @@ ATTACK_METHODS = [
     {"id": "BROWSER-EMU", "name": "Browser Emulation", "description": "Layer 7 browser simulation", "placeholders": ["{target}", "{port}", "{duration}", "{threads}"]},
     {"id": "RUDY", "name": "R-U-Dead-Yet", "description": "Layer 7 slow POST attack", "placeholders": ["{target}", "{port}", "{duration}", "{threads}"]}
 ]
+
+class MethodCreate(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+
+class MethodUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
 
 # ==================== HELPERS ====================
 
