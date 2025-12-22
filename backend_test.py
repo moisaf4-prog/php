@@ -6,7 +6,7 @@ from datetime import datetime
 import time
 
 class Layer7StresserAPITester:
-    def __init__(self, base_url="https://layer7-stress-test.preview.emergentagent.com"):
+    def __init__(self, base_url="https://stressnet.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.token = None
