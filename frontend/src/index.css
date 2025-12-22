@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme - Midnight Blue */
+/* Dark theme (default) */
 :root {
   --background: 222 47% 6%;
   --foreground: 210 40% 98%;
@@ -26,11 +26,23 @@
   --input: 217 33% 17%;
   --ring: 217 91% 60%;
   --radius: 0.75rem;
+  
+  /* Custom colors */
+  --slate-950: #020617;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
 }
 
 /* Light theme */
 .light {
-  --background: 210 40% 98%;
+  --background: 0 0% 100%;
   --foreground: 222 47% 11%;
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
@@ -49,6 +61,20 @@
   --border: 214 32% 91%;
   --input: 214 32% 91%;
   --ring: 217 91% 50%;
+}
+
+/* Light mode color overrides */
+.light {
+  --slate-950: #f8fafc;
+  --slate-900: #f1f5f9;
+  --slate-800: #e2e8f0;
+  --slate-700: #cbd5e1;
+  --slate-600: #94a3b8;
+  --slate-500: #64748b;
+  --slate-400: #475569;
+  --slate-300: #334155;
+  --slate-200: #1e293b;
+  --slate-100: #0f172a;
 }
 
 * {
@@ -95,38 +121,69 @@ code, .font-mono {
   }
 }
 
-/* Chart styling */
-.recharts-cartesian-grid-horizontal line,
-.recharts-cartesian-grid-vertical line {
-  stroke: hsl(var(--border));
-  stroke-opacity: 0.5;
+/* Light mode specific overrides for Tailwind slate colors */
+.light .bg-slate-950 { background-color: #f8fafc !important; }
+.light .bg-slate-900 { background-color: #f1f5f9 !important; }
+.light .bg-slate-800 { background-color: #e2e8f0 !important; }
+.light .bg-slate-800\/50 { background-color: rgba(226, 232, 240, 0.5) !important; }
+.light .bg-slate-800\/30 { background-color: rgba(226, 232, 240, 0.3) !important; }
+.light .bg-slate-900\/50 { background-color: rgba(241, 245, 249, 0.5) !important; }
+.light .bg-slate-900\/30 { background-color: rgba(241, 245, 249, 0.3) !important; }
+.light .bg-slate-950\/80 { background-color: rgba(248, 250, 252, 0.8) !important; }
+.light .bg-slate-950\/95 { background-color: rgba(248, 250, 252, 0.95) !important; }
+
+.light .text-slate-100 { color: #0f172a !important; }
+.light .text-slate-200 { color: #1e293b !important; }
+.light .text-slate-300 { color: #334155 !important; }
+.light .text-slate-400 { color: #475569 !important; }
+.light .text-slate-500 { color: #64748b !important; }
+.light .text-slate-600 { color: #94a3b8 !important; }
+
+.light .border-slate-800 { border-color: #e2e8f0 !important; }
+.light .border-slate-700 { border-color: #cbd5e1 !important; }
+
+.light .hover\:bg-slate-800:hover { background-color: #e2e8f0 !important; }
+.light .hover\:bg-slate-800\/50:hover { background-color: rgba(226, 232, 240, 0.5) !important; }
+.light .hover\:text-slate-100:hover { color: #0f172a !important; }
+.light .hover\:border-slate-700:hover { border-color: #cbd5e1 !important; }
+
+/* Light mode form inputs */
+.light input, .light select, .light textarea {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
 }
 
-.recharts-text {
-  fill: hsl(var(--muted-foreground));
+.light input::placeholder {
+  color: #94a3b8 !important;
 }
 
-/* Custom button styles */
-.btn-primary {
-  @apply bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors;
+/* Light mode dialogs */
+.light [role="dialog"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
 }
 
-.btn-secondary {
-  @apply bg-slate-800 hover:bg-slate-700 text-slate-100 font-medium rounded-lg border border-slate-700 transition-colors;
+/* Light mode select content */
+.light [role="listbox"] {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
 }
 
-/* Card styles */
-.card {
-  @apply bg-slate-900 border border-slate-800 rounded-xl;
+/* Chart styling for light mode */
+.light .recharts-cartesian-grid-horizontal line,
+.light .recharts-cartesian-grid-vertical line {
+  stroke: #e2e8f0;
 }
 
-/* Input styles */
-input, select, textarea {
-  @apply bg-slate-900 border-slate-700 text-slate-100 rounded-lg;
+.light .recharts-text {
+  fill: #64748b;
 }
 
-input::placeholder {
-  @apply text-slate-500;
+/* Light mode tooltip */
+.light .recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
 }
 
 /* Animations */
