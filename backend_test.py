@@ -376,8 +376,18 @@ class Layer7StresserAPITester:
         success, status, data = self.make_request('GET', 'admin/servers', headers=headers)
         
         if success and isinstance(data, list):
-            self.log_test("Admin Get Servers", True, f"Found {len(data)} servers")
-            return True
+            # Check for new required field: method_commands array
+            has_method_commands = False
+            for server in data:
+                if 'method_commands' in server and isinstance(server['method_commands'], list):
+                    has_method_commands = True
+                    commands_count = len(server['method_commands'])
+                    self.log_test("Admin Get Servers", True, f"Found {len(data)} servers with {commands_count} method commands")
+                    return True
+            
+            if not has_method_commands:
+                self.log_test("Admin Get Servers", False, "Servers missing method_commands array")
+                return False
         else:
             self.log_test("Admin Get Servers", False, f"Status: {status}, Response: {data}")
             return False
