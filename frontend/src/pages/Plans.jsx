@@ -9,7 +9,7 @@ import { Check, Zap, Clock, Users, CreditCard, ArrowRight } from "lucide-react";
 import { SiLitecoin, SiMonero, SiTether, SiSolana } from "react-icons/si";
 
 export default function Plans() {
-  const { user, refreshUser } = useAuth();
+  const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState("");
   const token = localStorage.getItem("token");
@@ -29,7 +29,6 @@ export default function Plans() {
 
   const handlePurchase = async (planId) => {
     if (planId === "free") return;
-    
     setLoading(planId);
     try {
       const res = await axios.post(`${API}/checkout`, {
@@ -38,8 +37,6 @@ export default function Plans() {
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      // Redirect to Stripe
       window.location.href = res.data.url;
     } catch (err) {
       toast.error(err.response?.data?.detail || "Checkout failed");
@@ -49,36 +46,39 @@ export default function Plans() {
   };
 
   const planColors = {
-    free: "border-cyber-muted",
-    basic: "border-cyber-accent",
-    premium: "border-cyber-primary",
-    enterprise: "border-cyber-secondary"
+    free: "border-slate-700",
+    basic: "border-blue-500",
+    premium: "border-emerald-500",
+    enterprise: "border-amber-500"
+  };
+
+  const planBtnColors = {
+    basic: "bg-blue-600 hover:bg-blue-700",
+    premium: "bg-emerald-600 hover:bg-emerald-700",
+    enterprise: "bg-amber-600 hover:bg-amber-700"
   };
 
   return (
     <Layout>
       <div data-testid="plans-page" className="space-y-8">
-        {/* Header */}
         <div className="text-center">
-          <h1 className="font-heading text-3xl font-bold text-cyber-text tracking-tight">CHOOSE YOUR POWER</h1>
-          <p className="text-cyber-muted mt-2">Select a plan that fits your testing needs</p>
+          <h1 className="text-3xl font-bold text-slate-100">Choose Your Plan</h1>
+          <p className="text-slate-400 mt-2">Select a plan that fits your testing needs</p>
           
-          {/* Crypto Icons */}
           <div className="flex items-center justify-center gap-4 mt-4">
-            <span className="text-cyber-muted text-sm">We accept:</span>
-            <SiLitecoin className="w-5 h-5 text-gray-400" title="Litecoin" />
-            <SiMonero className="w-5 h-5 text-orange-400" title="Monero" />
-            <SiTether className="w-5 h-5 text-green-400" title="USDT" />
-            <SiSolana className="w-5 h-5 text-purple-400" title="Solana" />
-            <CreditCard className="w-5 h-5 text-cyber-muted" title="Card" />
+            <span className="text-slate-500 text-sm">We accept:</span>
+            <SiLitecoin className="w-5 h-5 text-slate-400 hover:text-blue-500 transition-colors" title="Litecoin" />
+            <SiMonero className="w-5 h-5 text-slate-400 hover:text-orange-500 transition-colors" title="Monero" />
+            <SiTether className="w-5 h-5 text-slate-400 hover:text-green-500 transition-colors" title="USDT" />
+            <SiSolana className="w-5 h-5 text-slate-400 hover:text-purple-500 transition-colors" title="Solana" />
+            <CreditCard className="w-5 h-5 text-slate-400" title="Card" />
           </div>
         </div>
 
-        {/* Plans Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan, idx) => {
             const isCurrentPlan = user?.plan === plan.id;
-            const colorClass = planColors[plan.id] || "border-cyber-border";
+            const colorClass = planColors[plan.id] || "border-slate-700";
             
             return (
               <motion.div
@@ -86,77 +86,62 @@ export default function Plans() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className={`relative bg-cyber-surface border-2 ${colorClass} p-6 flex flex-col`}
+                className={`relative bg-slate-900 border-2 ${colorClass} rounded-xl p-6 flex flex-col`}
               >
-                {/* Corner decorations */}
-                <div className={`absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 ${colorClass}`} />
-                <div className={`absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 ${colorClass}`} />
-                
-                {/* Current Plan Badge */}
                 {isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-cyber-primary text-black text-xs font-heading font-bold uppercase">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold uppercase rounded-full">
                     Current
                   </div>
                 )}
                 
-                {/* Plan Header */}
                 <div className="mb-6">
-                  <h3 className="font-heading text-xl font-bold text-cyber-text uppercase tracking-wider">
+                  <h3 className="text-xl font-bold text-slate-100 uppercase tracking-wider">
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline gap-1 mt-2">
-                    <span className="font-heading text-3xl font-bold text-cyber-text">
+                    <span className="text-3xl font-bold text-slate-100">
                       ${plan.price.toFixed(2)}
                     </span>
-                    <span className="text-cyber-muted text-sm">/month</span>
+                    <span className="text-slate-500 text-sm">/month</span>
                   </div>
                 </div>
                 
-                {/* Specs */}
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-cyber-primary" />
-                    <span className="text-cyber-text text-sm">
+                    <Clock className="w-4 h-4 text-blue-500" />
+                    <span className="text-slate-300 text-sm">
                       {plan.max_time >= 60 ? `${plan.max_time / 60}min` : `${plan.max_time}s`} max attack
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-cyber-accent" />
-                    <span className="text-cyber-text text-sm">
+                    <Users className="w-4 h-4 text-cyan-500" />
+                    <span className="text-slate-300 text-sm">
                       {plan.max_concurrent} concurrent
                     </span>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Zap className="w-4 h-4 text-cyber-secondary" />
-                    <span className="text-cyber-text text-sm">
+                    <Zap className="w-4 h-4 text-amber-500" />
+                    <span className="text-slate-300 text-sm">
                       {plan.methods.length} methods
                     </span>
                   </div>
                 </div>
                 
-                {/* Features */}
                 <div className="flex-1 space-y-2 mb-6">
-                  {plan.features.map((feature, i) => (
+                  {plan.features?.map((feature, i) => (
                     <div key={i} className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-cyber-primary flex-shrink-0" />
-                      <span className="text-cyber-muted text-sm">{feature}</span>
+                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      <span className="text-slate-400 text-sm">{feature}</span>
                     </div>
                   ))}
                 </div>
                 
-                {/* Action Button */}
                 {plan.id === "free" ? (
-                  <Button
-                    disabled
-                    className="w-full bg-cyber-muted/20 text-cyber-muted font-heading uppercase tracking-wider cursor-not-allowed"
-                  >
+                  <Button disabled className="w-full bg-slate-800 text-slate-500 cursor-not-allowed rounded-lg">
                     Free Plan
                   </Button>
                 ) : isCurrentPlan ? (
-                  <Button
-                    disabled
-                    className="w-full bg-cyber-primary/20 text-cyber-primary font-heading uppercase tracking-wider cursor-not-allowed"
-                  >
+                  <Button disabled className="w-full bg-blue-600/20 text-blue-500 cursor-not-allowed rounded-lg">
                     Active
                   </Button>
                 ) : (
@@ -164,13 +149,7 @@ export default function Plans() {
                     data-testid={`buy-${plan.id}`}
                     onClick={() => handlePurchase(plan.id)}
                     disabled={loading === plan.id}
-                    className={`w-full font-heading font-bold uppercase tracking-wider transition-all ${
-                      plan.id === "premium" 
-                        ? "bg-cyber-primary text-black hover:bg-cyber-primaryDim hover:shadow-[0_0_15px_rgba(0,255,148,0.5)]"
-                        : plan.id === "enterprise"
-                        ? "bg-cyber-secondary text-white hover:bg-cyber-secondary/80 hover:shadow-[0_0_15px_rgba(255,0,60,0.5)]"
-                        : "bg-cyber-accent text-black hover:bg-cyber-accent/80"
-                    }`}
+                    className={`w-full ${planBtnColors[plan.id] || 'bg-blue-600 hover:bg-blue-700'} text-white font-bold uppercase tracking-wider rounded-lg`}
                   >
                     {loading === plan.id ? (
                       <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -184,41 +163,6 @@ export default function Plans() {
               </motion.div>
             );
           })}
-        </div>
-
-        {/* Methods Preview */}
-        <div className="bg-cyber-surface border border-cyber-border p-6">
-          <h2 className="font-heading text-lg font-bold text-cyber-text mb-4">AVAILABLE METHODS BY PLAN</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-cyber-border">
-                  <th className="text-left py-2 text-xs uppercase tracking-wider text-cyber-muted">Method</th>
-                  {plans.map(p => (
-                    <th key={p.id} className="text-center py-2 text-xs uppercase tracking-wider text-cyber-muted">
-                      {p.name}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {["HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS", "TLS-VIP", "CF-BYPASS", "BROWSER-SIM", "RUDY"].map(method => (
-                  <tr key={method} className="border-b border-cyber-border/50">
-                    <td className="py-2 font-code text-sm text-cyber-text">{method}</td>
-                    {plans.map(p => (
-                      <td key={p.id} className="text-center py-2">
-                        {p.methods.includes(method) ? (
-                          <Check className="w-4 h-4 text-cyber-primary mx-auto" />
-                        ) : (
-                          <span className="text-cyber-muted">-</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </div>
       </div>
     </Layout>
