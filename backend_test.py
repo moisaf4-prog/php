@@ -425,6 +425,7 @@ class Layer7StresserAPITester:
         self.test_root_endpoint()
         self.test_get_plans()
         self.test_get_methods()
+        self.test_public_stats()
         
         # Authentication tests
         if self.test_register():
@@ -433,6 +434,7 @@ class Layer7StresserAPITester:
             
             # Attack tests
             self.test_create_attack()
+            self.test_attack_with_server_selection()
             self.test_get_attacks()
             self.test_get_running_attacks()
             
@@ -442,8 +444,14 @@ class Layer7StresserAPITester:
             # Payment tests
             self.test_checkout_invalid_plan()
             
-            # Admin tests
+            # Admin tests (unauthorized)
             self.test_admin_endpoints_unauthorized()
+        
+        # Admin tests (authorized)
+        if self.test_admin_login():
+            self.test_admin_stats()
+            self.test_admin_servers()
+            self.test_admin_settings()
         
         # Print summary
         print("\n" + "=" * 50)
