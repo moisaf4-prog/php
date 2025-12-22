@@ -45,9 +45,12 @@ export default function Register() {
 
   return (
     <div className="min-h-screen bg-cyber-bg flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1643388019517-cc10ed310a97?w=1920')] bg-cover bg-center opacity-10" />
-      <div className="absolute inset-0 bg-gradient-to-b from-cyber-bg via-transparent to-cyber-bg" />
+      {/* Theme toggle */}
+      <div className="absolute top-4 right-4 z-20">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-cyber-muted hover:text-cyber-primary">
+          {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </Button>
+      </div>
       
       <motion.div
         initial={{ opacity: 0, y: 20 }}
