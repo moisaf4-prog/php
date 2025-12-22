@@ -304,15 +304,56 @@ async def regenerate_api_key(user: dict = Depends(get_current_user)):
 
 @api_router.get("/plans")
 async def get_plans():
-    return list(PLANS.values())
+    plans = await db.plans.find({}, {"_id": 0}).to_list(100)
+    if not plans:
+        # Initialize default plans if DB is empty
+        for plan_data in PLANS.values():
+            await db.plans.insert_one(plan_data)
+        return list(PLANS.values())
+    return plans
 
 @api_router.get("/methods")
 async def get_methods():
     methods = await db.attack_methods.find({}, {"_id": 0}).to_list(100)
     if not methods:
-        # Fallback to defaults if DB is empty
         return DEFAULT_ATTACK_METHODS
     return methods
+
+# ==================== ADMIN - PLANS ====================
+
+@api_router.post("/admin/plans")
+async def admin_create_plan(data: PlanCreate, admin: dict = Depends(get_admin_user)):
+    existing = await db.plans.find_one({"id": data.id})
+    if existing:
+        raise HTTPException(status_code=400, detail="Plan ID already exists")
+    
+    plan = data.model_dump()
+    await db.plans.insert_one(plan)
+    return {"message": "Plan created", "id": data.id}
+
+@api_router.put("/admin/plans/{plan_id}")
+async def admin_update_plan(plan_id: str, data: PlanUpdate, admin: dict = Depends(get_admin_user)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    result = await db.plans.update_one({"id": plan_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    return {"message": "Plan updated"}
+
+@api_router.delete("/admin/plans/{plan_id}")
+async def admin_delete_plan(plan_id: str, admin: dict = Depends(get_admin_user)):
+    if plan_id == "free":
+        raise HTTPException(status_code=400, detail="Cannot delete free plan")
+    
+    result = await db.plans.delete_one({"id": plan_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    
+    # Move users on this plan to free
+    await db.users.update_many({"plan": plan_id}, {"$set": {"plan": "free", "plan_expires": None}})
+    return {"message": "Plan deleted, users moved to free"}
 
 # ==================== ADMIN - METHODS ====================
 
