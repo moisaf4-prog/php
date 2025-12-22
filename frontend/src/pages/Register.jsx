@@ -44,10 +44,10 @@ export default function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-cyber-bg flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-panel flex items-center justify-center p-4">
       {/* Theme toggle */}
       <div className="absolute top-4 right-4 z-20">
-        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-cyber-muted hover:text-cyber-primary">
+        <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-panel-muted hover:text-panel-primary rounded-lg">
           {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
         </Button>
       </div>
@@ -55,65 +55,62 @@ export default function Register() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md"
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md"
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center gap-3 mb-4">
-            <Zap className="w-10 h-10 text-cyber-primary" />
-            <h1 className="font-heading text-3xl font-bold text-cyber-primary tracking-tight">STRESSER</h1>
-          </div>
-          <p className="text-cyber-muted font-body">Layer 7 Stress Testing Panel</p>
+          <Link to="/" className="inline-flex items-center gap-2 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-panel-primary flex items-center justify-center">
+              <Zap className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-2xl font-bold text-panel">Stresser<span className="text-panel-primary">.io</span></span>
+          </Link>
+          <p className="text-panel-muted">Create your account</p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-cyber-surface border border-cyber-border p-8 relative">
-          <div className="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-cyber-primary" />
-          <div className="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-cyber-primary" />
-          
-          <h2 className="font-heading text-xl font-bold text-cyber-text mb-6 uppercase tracking-wider">Register</h2>
-          
+        <div className="bg-panel-surface rounded-2xl border border-panel p-8">
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-cyber-muted">Username</Label>
+              <Label className="text-sm text-panel-muted">Username</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-muted" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-panel-muted" />
                 <Input
                   data-testid="register-username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Choose username"
-                  className="pl-10 bg-cyber-highlight border-cyber-border focus:border-cyber-primary text-cyber-text font-code"
+                  className="pl-11 h-12 bg-panel-hover border-panel text-panel rounded-xl focus:ring-2 focus:ring-panel-primary"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-cyber-muted">Password</Label>
+              <Label className="text-sm text-panel-muted">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-muted" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-panel-muted" />
                 <Input
                   data-testid="register-password"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Choose password"
-                  className="pl-10 bg-cyber-highlight border-cyber-border focus:border-cyber-primary text-cyber-text font-code"
+                  className="pl-11 h-12 bg-panel-hover border-panel text-panel rounded-xl focus:ring-2 focus:ring-panel-primary"
                 />
               </div>
             </div>
             
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-cyber-muted">Telegram ID</Label>
+              <Label className="text-sm text-panel-muted">Telegram ID</Label>
               <div className="relative">
-                <SiTelegram className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-cyber-muted" />
+                <SiTelegram className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-panel-muted" />
                 <Input
                   data-testid="register-telegram"
                   value={telegramId}
                   onChange={(e) => setTelegramId(e.target.value)}
                   placeholder="@username or ID"
-                  className="pl-10 bg-cyber-highlight border-cyber-border focus:border-cyber-primary text-cyber-text font-code"
+                  className="pl-11 h-12 bg-panel-hover border-panel text-panel rounded-xl focus:ring-2 focus:ring-panel-primary"
                 />
               </div>
             </div>
@@ -122,17 +119,21 @@ export default function Register() {
               data-testid="register-submit"
               type="submit"
               disabled={loading}
-              className="w-full bg-cyber-primary text-black font-heading font-bold uppercase tracking-widest hover:bg-cyber-primaryDim hover:shadow-[0_0_15px_rgba(0,255,148,0.5)] transition-all"
+              className="w-full h-12 bg-panel-primary hover:bg-panel-primary/90 text-white font-semibold rounded-xl"
             >
-              {loading ? "Creating..." : "Create Account"}
+              {loading ? (
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                "Create Account"
+              )}
             </Button>
           </form>
           
           <div className="mt-6 text-center">
-            <p className="text-cyber-muted text-sm">
+            <p className="text-panel-muted text-sm">
               Already have an account?{" "}
-              <Link to="/login" className="text-cyber-primary hover:text-cyber-accent transition-colors">
-                Login
+              <Link to="/login" className="text-panel-primary hover:underline font-medium">
+                Sign in
               </Link>
             </p>
           </div>
