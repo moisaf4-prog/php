@@ -43,7 +43,7 @@ export default function Layout({ children }) {
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold text-slate-100">Stresser<span className="text-blue-500">.io</span></span>
+            <span className="text-lg font-semibold text-slate-100">Layer7<span className="text-blue-500">Top</span></span>
           </Link>
         </div>
         
