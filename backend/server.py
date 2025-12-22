@@ -291,7 +291,46 @@ async def get_plans():
 
 @api_router.get("/methods")
 async def get_methods():
-    return ATTACK_METHODS
+    methods = await db.attack_methods.find({}, {"_id": 0}).to_list(100)
+    if not methods:
+        # Fallback to defaults if DB is empty
+        return DEFAULT_ATTACK_METHODS
+    return methods
+
+# ==================== ADMIN - METHODS ====================
+
+@api_router.post("/admin/methods")
+async def admin_create_method(data: MethodCreate, admin: dict = Depends(get_admin_user)):
+    existing = await db.attack_methods.find_one({"id": data.id})
+    if existing:
+        raise HTTPException(status_code=400, detail="Method ID already exists")
+    
+    method = {
+        "id": data.id,
+        "name": data.name,
+        "description": data.description,
+        "placeholders": ["{target}", "{port}", "{duration}", "{threads}"]
+    }
+    await db.attack_methods.insert_one(method)
+    return {"message": "Method created", "id": data.id}
+
+@api_router.put("/admin/methods/{method_id}")
+async def admin_update_method(method_id: str, data: MethodUpdate, admin: dict = Depends(get_admin_user)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    result = await db.attack_methods.update_one({"id": method_id}, {"$set": update_data})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Method not found")
+    return {"message": "Method updated"}
+
+@api_router.delete("/admin/methods/{method_id}")
+async def admin_delete_method(method_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.attack_methods.delete_one({"id": method_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Method not found")
+    return {"message": "Method deleted"}
 
 @api_router.get("/public/stats")
 async def get_public_stats():
