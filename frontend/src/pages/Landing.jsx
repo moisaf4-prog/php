@@ -53,6 +53,11 @@ export default function Landing() {
           </Link>
           
           <div className="flex items-center gap-3">
+            <Link to="/faq">
+              <Button variant="ghost" className="text-slate-400 hover:text-slate-100 font-medium">
+                FAQ
+              </Button>
+            </Link>
             <Button
               variant="ghost"
               size="icon"
