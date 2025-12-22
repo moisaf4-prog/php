@@ -49,7 +49,7 @@ export default function Landing() {
             <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center">
               <Zap className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-semibold text-slate-100">Stresser<span className="text-blue-500">.io</span></span>
+            <span className="text-xl font-semibold text-slate-100">Layer7<span className="text-blue-500">Top</span></span>
           </Link>
           
           <div className="flex items-center gap-3">
