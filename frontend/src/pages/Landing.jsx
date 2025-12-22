@@ -468,10 +468,10 @@ export default function Landing() {
             <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center">
               <Zap className="w-4 h-4 text-white" />
             </div>
-            <span className="font-semibold text-slate-100">Stresser.io</span>
+            <span className="font-semibold text-slate-100">Layer7Top</span>
           </div>
           <p className="text-slate-500 text-sm">
-            Layer 7 Stress Testing Platform • For authorized testing only
+            Layer 7 Stress Testing Platform • layer7top.st • For authorized testing only
           </p>
         </div>
       </footer>
