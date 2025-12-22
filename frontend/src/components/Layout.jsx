@@ -15,7 +15,7 @@ const navItems = [
 ];
 
 const adminItems = [
-  { path: "/admin", label: "Admin Panel", icon: Shield },
+  { path: "/admin", label: "Dashboard", icon: Shield },
   { path: "/admin/servers", label: "Servers", icon: Server },
 ];
 
@@ -32,19 +32,21 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-cyber-bg flex">
+    <div className="min-h-screen bg-panel flex">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 border-r border-cyber-border bg-cyber-surface z-40">
+      <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 border-r border-panel bg-panel-surface">
         {/* Logo */}
-        <div className="p-6 border-b border-cyber-border">
-          <Link to="/" className="flex items-center gap-3">
-            <Zap className="w-8 h-8 text-cyber-primary" />
-            <span className="font-heading text-xl font-bold text-cyber-primary tracking-tight">STRESSER</span>
+        <div className="p-5 border-b border-panel">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-panel-primary flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-semibold text-panel">Stresser<span className="text-panel-primary">.io</span></span>
           </Link>
         </div>
         
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-3 space-y-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -53,10 +55,10 @@ export default function Layout({ children }) {
                 key={item.path}
                 to={item.path}
                 data-testid={`nav-${item.path.slice(1)}`}
-                className={`flex items-center gap-3 px-4 py-3 font-body text-sm uppercase tracking-wider transition-all relative z-10 ${ 
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${ 
                   isActive
-                    ? "bg-cyber-primary/10 text-cyber-primary border-l-2 border-cyber-primary"
-                    : "text-cyber-muted hover:text-cyber-text hover:bg-cyber-highlight"
+                    ? "bg-panel-primary/10 text-panel-primary"
+                    : "text-panel-muted hover:text-panel hover:bg-panel-hover"
                 }`}
               >
                 <Icon className="w-5 h-5" />
@@ -67,8 +69,8 @@ export default function Layout({ children }) {
           
           {user?.role === "admin" && (
             <>
-              <div className="pt-4 pb-2">
-                <span className="text-xs uppercase tracking-wider text-cyber-muted px-4">Admin</span>
+              <div className="pt-4 pb-2 px-3">
+                <span className="text-xs uppercase tracking-wider text-panel-muted font-medium">Admin</span>
               </div>
               {adminItems.map((item) => {
                 const Icon = item.icon;
@@ -78,10 +80,10 @@ export default function Layout({ children }) {
                     key={item.path}
                     to={item.path}
                     data-testid={`nav-${item.path.replace(/\//g, '-').slice(1)}`}
-                    className={`flex items-center gap-3 px-4 py-3 font-body text-sm uppercase tracking-wider transition-all relative z-10 ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                       isActive
-                        ? "bg-cyber-secondary/10 text-cyber-secondary border-l-2 border-cyber-secondary"
-                        : "text-cyber-muted hover:text-cyber-secondary hover:bg-cyber-highlight"
+                        ? "bg-panel-warning/10 text-panel-warning"
+                        : "text-panel-muted hover:text-panel-warning hover:bg-panel-hover"
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -93,19 +95,21 @@ export default function Layout({ children }) {
           )}
         </nav>
         
-        {/* User Info & Actions */}
-        <div className="p-4 border-t border-cyber-border">
-          <div className="mb-4 px-4">
-            <p className="text-xs text-cyber-muted uppercase tracking-wider">Logged in as</p>
-            <p className="font-code text-cyber-text truncate">{user?.username}</p>
-            <p className="text-xs text-cyber-primary uppercase mt-1">{user?.plan} plan</p>
+        {/* User Info */}
+        <div className="p-4 border-t border-panel">
+          <div className="mb-4 px-2">
+            <p className="text-xs text-panel-muted">Signed in as</p>
+            <p className="font-medium text-panel truncate">{user?.username}</p>
+            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-panel-primary/10 text-panel-primary mt-1">
+              {user?.plan}
+            </span>
           </div>
           <div className="flex gap-2">
             <Button
               onClick={toggleTheme}
               variant="ghost"
               size="icon"
-              className="text-cyber-muted hover:text-cyber-primary hover:bg-cyber-primary/10"
+              className="text-panel-muted hover:text-panel-primary hover:bg-panel-hover rounded-lg"
             >
               {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
@@ -113,48 +117,39 @@ export default function Layout({ children }) {
               onClick={handleLogout}
               data-testid="logout-btn"
               variant="ghost"
-              className="flex-1 justify-start gap-3 text-cyber-muted hover:text-cyber-secondary hover:bg-cyber-secondary/10"
+              className="flex-1 justify-start gap-2 text-panel-muted hover:text-panel-danger hover:bg-panel-danger/10 rounded-lg"
             >
               <LogOut className="w-5 h-5" />
-              Logout
+              Sign out
             </Button>
           </div>
         </div>
       </aside>
 
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-cyber-bg/95 backdrop-blur border-b border-cyber-border">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-panel/95 backdrop-blur border-b border-panel">
         <div className="flex items-center justify-between p-4">
           <Link to="/" className="flex items-center gap-2">
-            <Zap className="w-6 h-6 text-cyber-primary" />
-            <span className="font-heading text-lg font-bold text-cyber-primary">STRESSER</span>
+            <div className="w-8 h-8 rounded-lg bg-panel-primary flex items-center justify-center">
+              <Zap className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-semibold text-panel">Stresser.io</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="text-cyber-muted"
-            >
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-panel-muted rounded-lg">
               {theme === "dark" ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="text-cyber-text"
-            >
+            <Button variant="ghost" size="icon" onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-panel rounded-lg">
               {mobileMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>
         </div>
         
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <motion.nav
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="p-4 bg-cyber-surface border-b border-cyber-border"
+            className="p-4 bg-panel-surface border-b border-panel"
           >
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -163,7 +158,7 @@ export default function Layout({ children }) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-cyber-muted hover:text-cyber-primary"
+                  className="flex items-center gap-3 px-3 py-2.5 text-panel-muted hover:text-panel-primary rounded-lg"
                 >
                   <Icon className="w-5 h-5" />
                   {item.label}
@@ -177,7 +172,7 @@ export default function Layout({ children }) {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-cyber-muted hover:text-cyber-secondary"
+                  className="flex items-center gap-3 px-3 py-2.5 text-panel-muted hover:text-panel-warning rounded-lg"
                 >
                   <Icon className="w-5 h-5" />
                   {item.label}
@@ -186,18 +181,20 @@ export default function Layout({ children }) {
             })}
             <button
               onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
-              className="flex items-center gap-3 px-4 py-3 text-cyber-muted hover:text-cyber-secondary w-full"
+              className="flex items-center gap-3 px-3 py-2.5 text-panel-muted hover:text-panel-danger w-full rounded-lg"
             >
               <LogOut className="w-5 h-5" />
-              Logout
+              Sign out
             </button>
           </motion.nav>
         )}
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 lg:p-8 p-4 pt-20 lg:pt-8">
-        {children}
+      <main className="flex-1 p-6 pt-20 lg:pt-6 overflow-auto">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );
