@@ -7,9 +7,10 @@ import Layout from "../components/Layout";
 import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { 
-  Shield, Users, Target, DollarSign, Activity, Clock, RefreshCw, TrendingUp
+  Shield, Users, Target, DollarSign, Activity, Clock, RefreshCw, TrendingUp, Server
 } from "lucide-react";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar } from "recharts";
+import { Link } from "react-router-dom";
 
 export default function Admin() {
   const [stats, setStats] = useState(null);
@@ -94,90 +95,133 @@ export default function Admin() {
             </h1>
             <p className="text-cyber-muted mt-1">System overview and user management</p>
           </div>
-          <Button
-            onClick={fetchData}
-            variant="ghost"
-            className="text-cyber-muted hover:text-cyber-primary"
-          >
-            <RefreshCw className="w-5 h-5 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Link to="/admin/servers">
+              <Button variant="outline" className="border-cyber-border text-cyber-text hover:bg-cyber-surface">
+                <Server className="w-5 h-5 mr-2" />
+                Manage Servers
+              </Button>
+            </Link>
+            <Button onClick={fetchData} variant="ghost" className="text-cyber-muted hover:text-cyber-primary">
+              <RefreshCw className="w-5 h-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-cyber-surface border border-cyber-border p-6"
+            className="bg-cyber-surface border border-cyber-border p-4"
           >
-            <div className="flex items-center gap-3">
-              <Users className="w-8 h-8 text-cyber-primary" />
-              <div>
-                <p className="text-xs text-cyber-muted uppercase">Total Users</p>
-                <p className="font-heading text-3xl font-bold text-cyber-text">{stats?.total_users || 0}</p>
-              </div>
-            </div>
+            <Users className="w-6 h-6 text-cyber-primary mb-2" />
+            <p className="font-heading text-2xl font-bold text-cyber-text">{stats?.total_users || 0}</p>
+            <p className="text-xs text-cyber-muted uppercase">Total Users</p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="bg-cyber-surface border border-cyber-border p-4"
+          >
+            <Users className="w-6 h-6 text-cyber-accent mb-2" />
+            <p className="font-heading text-2xl font-bold text-cyber-accent">{stats?.paid_users || 0}</p>
+            <p className="text-xs text-cyber-muted uppercase">Paid Users</p>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-cyber-surface border border-cyber-border p-6"
+            className="bg-cyber-surface border border-cyber-border p-4"
           >
-            <div className="flex items-center gap-3">
-              <Target className="w-8 h-8 text-cyber-accent" />
-              <div>
-                <p className="text-xs text-cyber-muted uppercase">Total Attacks</p>
-                <p className="font-heading text-3xl font-bold text-cyber-text">{stats?.total_attacks || 0}</p>
-              </div>
-            </div>
+            <TrendingUp className="w-6 h-6 text-green-500 mb-2" />
+            <p className="font-heading text-2xl font-bold text-green-500">{stats?.users_today || 0}</p>
+            <p className="text-xs text-cyber-muted uppercase">New Today</p>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-cyber-surface border border-cyber-border p-4"
+          >
+            <Target className="w-6 h-6 text-cyber-accent mb-2" />
+            <p className="font-heading text-2xl font-bold text-cyber-text">{stats?.total_attacks || 0}</p>
+            <p className="text-xs text-cyber-muted uppercase">Total Attacks</p>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-cyber-surface border border-cyber-border p-6"
+            className="bg-cyber-surface border border-cyber-border p-4"
           >
-            <div className="flex items-center gap-3">
-              <Activity className="w-8 h-8 text-cyber-secondary" />
-              <div>
-                <p className="text-xs text-cyber-muted uppercase">Running Now</p>
-                <p className="font-heading text-3xl font-bold text-cyber-secondary">{stats?.running_attacks || 0}</p>
-              </div>
-            </div>
+            <Activity className="w-6 h-6 text-cyber-secondary mb-2" />
+            <p className="font-heading text-2xl font-bold text-cyber-secondary">{stats?.attacks_24h || 0}</p>
+            <p className="text-xs text-cyber-muted uppercase">Attacks (24h)</p>
           </motion.div>
           
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="bg-cyber-surface border border-cyber-primary/30 p-6"
+            transition={{ delay: 0.25 }}
+            className="bg-cyber-surface border border-cyber-primary/30 p-4"
           >
-            <div className="flex items-center gap-3">
-              <DollarSign className="w-8 h-8 text-cyber-primary" />
-              <div>
-                <p className="text-xs text-cyber-muted uppercase">Total Revenue</p>
-                <p className="font-heading text-3xl font-bold text-cyber-primary">${stats?.total_revenue?.toFixed(2) || "0.00"}</p>
-              </div>
-            </div>
+            <DollarSign className="w-6 h-6 text-cyber-primary mb-2" />
+            <p className="font-heading text-2xl font-bold text-cyber-primary">${stats?.total_revenue?.toFixed(2) || "0.00"}</p>
+            <p className="text-xs text-cyber-muted uppercase">Revenue</p>
           </motion.div>
         </div>
 
-        {/* Plan Distribution */}
+        {/* Server Status */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-cyber-surface border border-cyber-border p-6"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading text-lg font-bold text-cyber-text flex items-center gap-2">
+              <Server className="w-5 h-5 text-green-500" />
+              SERVER STATUS
+            </h2>
+            <div className="flex items-center gap-4 text-sm">
+              <span className="text-cyber-muted">
+                Online: <span className="text-green-500 font-bold">{stats?.online_servers || 0}</span>/{stats?.total_servers || 0}
+              </span>
+              <span className="text-cyber-muted">
+                Capacity: <span className="text-cyber-primary font-bold">{stats?.total_capacity || 0}</span>
+              </span>
+              <span className="text-cyber-muted">
+                Running: <span className="text-cyber-secondary font-bold">{stats?.running_attacks || 0}</span>
+              </span>
+            </div>
+          </div>
+          
+          <div className="h-3 bg-cyber-highlight rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-green-500 via-yellow-500 to-red-500 transition-all"
+              style={{ width: `${stats?.total_capacity ? ((stats?.running_attacks || 0) / stats.total_capacity) * 100 : 0}%` }}
+            />
+          </div>
+          <p className="text-xs text-cyber-muted mt-2">
+            Global load: {stats?.running_attacks || 0} / {stats?.total_capacity || 0} concurrent attacks
+          </p>
+        </motion.div>
+
+        {/* Charts Row */}
         <div className="grid md:grid-cols-2 gap-6">
+          {/* Plan Distribution */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
+            transition={{ delay: 0.35 }}
             className="bg-cyber-surface border border-cyber-border p-6"
           >
-            <h2 className="font-heading text-lg font-bold text-cyber-text mb-4 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-cyber-primary" />
-              PLAN DISTRIBUTION
-            </h2>
+            <h2 className="font-heading text-lg font-bold text-cyber-text mb-4">PLAN DISTRIBUTION</h2>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -195,50 +239,79 @@ export default function Admin() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ background: "#0A0A0A", border: "1px solid #222222" }}
-                    itemStyle={{ color: "#EDEDED" }}
+                    contentStyle={{ background: "var(--cyber-surface)", border: "1px solid var(--cyber-border)" }}
+                    itemStyle={{ color: "var(--cyber-text)" }}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </motion.div>
 
-          {/* Recent Activity */}
+          {/* Attacks Per Day */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.4 }}
             className="bg-cyber-surface border border-cyber-border p-6"
           >
-            <h2 className="font-heading text-lg font-bold text-cyber-text mb-4 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-cyber-accent" />
-              RECENT ATTACKS
-            </h2>
-            <div className="space-y-3 max-h-64 overflow-y-auto">
-              {attacks.slice(0, 10).map((attack) => (
-                <div key={attack.id} className="flex items-center justify-between p-3 bg-cyber-highlight border border-cyber-border">
-                  <div>
-                    <p className="font-code text-sm text-cyber-text">{attack.target}</p>
-                    <p className="text-xs text-cyber-muted">{attack.method} • {attack.duration}s</p>
-                  </div>
-                  <div className={`px-2 py-1 text-xs font-code uppercase ${
-                    attack.status === "running" ? "bg-cyber-primary/20 text-cyber-primary" :
-                    attack.status === "completed" ? "bg-cyber-accent/20 text-cyber-accent" :
-                    "bg-cyber-muted/20 text-cyber-muted"
-                  }`}>
-                    {attack.status}
-                  </div>
-                </div>
-              ))}
+            <h2 className="font-heading text-lg font-bold text-cyber-text mb-4">ATTACKS (LAST 7 DAYS)</h2>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats?.attacks_per_day || []}>
+                  <XAxis dataKey="date" tick={{ fill: "var(--cyber-muted)", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "var(--cyber-muted)", fontSize: 10 }} />
+                  <Tooltip 
+                    contentStyle={{ background: "var(--cyber-surface)", border: "1px solid var(--cyber-border)" }}
+                    itemStyle={{ color: "var(--cyber-text)" }}
+                  />
+                  <Bar dataKey="attacks" fill="var(--cyber-primary)" />
+                </BarChart>
+              </ResponsiveContainer>
             </div>
           </motion.div>
         </div>
+
+        {/* Recent Attacks */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="bg-cyber-surface border border-cyber-border p-6"
+        >
+          <h2 className="font-heading text-lg font-bold text-cyber-text mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-cyber-accent" />
+            RECENT ATTACKS
+          </h2>
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {attacks.slice(0, 10).map((attack) => (
+              <div key={attack.id} className="flex items-center justify-between p-3 bg-cyber-highlight border border-cyber-border">
+                <div className="flex items-center gap-4">
+                  <div className={`w-2 h-2 rounded-full ${
+                    attack.status === "running" ? "bg-green-500 animate-pulse" : 
+                    attack.status === "completed" ? "bg-cyber-accent" : "bg-cyber-muted"
+                  }`} />
+                  <div>
+                    <p className="font-code text-sm text-cyber-text">{attack.target}</p>
+                    <p className="text-xs text-cyber-muted">{attack.method} • {attack.duration}s • Server: {attack.server_name || "N/A"}</p>
+                  </div>
+                </div>
+                <div className={`px-2 py-1 text-xs font-code uppercase ${
+                  attack.status === "running" ? "bg-cyber-primary/20 text-cyber-primary" :
+                  attack.status === "completed" ? "bg-cyber-accent/20 text-cyber-accent" :
+                  "bg-cyber-muted/20 text-cyber-muted"
+                }`}>
+                  {attack.status}
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
 
         {/* Users Table */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.5 }}
           className="bg-cyber-surface border border-cyber-border overflow-hidden"
         >
           <div className="p-6 border-b border-cyber-border">
