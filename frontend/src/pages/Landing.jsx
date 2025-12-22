@@ -6,9 +6,10 @@ import { API, useAuth, useTheme } from "../App";
 import { Button } from "../components/ui/button";
 import { 
   Zap, Target, Users, Activity, Server, ArrowRight, 
-  Moon, Sun, Shield, Cpu, HardDrive, TrendingUp
+  Moon, Sun, Shield, Cpu, HardDrive, TrendingUp, CreditCard
 } from "lucide-react";
 import { SiLitecoin, SiMonero, SiTether, SiSolana } from "react-icons/si";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function Landing() {
   const { user } = useAuth();
