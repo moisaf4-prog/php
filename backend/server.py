@@ -281,6 +281,7 @@ async def get_public_stats():
     day_ago = (now - timedelta(days=1)).isoformat()
     
     total_users = await db.users.count_documents({})
+    paid_users = await db.users.count_documents({"plan": {"$ne": "free"}})
     total_attacks = await db.attacks.count_documents({})
     attacks_24h = await db.attacks.count_documents({"started_at": {"$gte": day_ago}})
     
@@ -295,8 +296,23 @@ async def get_public_stats():
     total_ram_used = sum(s.get("ram_used", 0) for s in online_servers)
     total_ram_total = sum(s.get("ram_total", 0) for s in online_servers)
     
+    # Hourly attacks for last 24 hours (for public display)
+    attacks_per_hour = []
+    for i in range(24):
+        hour_start = now - timedelta(hours=i+1)
+        hour_end = now - timedelta(hours=i)
+        count = await db.attacks.count_documents({
+            "started_at": {"$gte": hour_start.isoformat(), "$lt": hour_end.isoformat()}
+        })
+        attacks_per_hour.append({
+            "hour": hour_end.strftime("%H:00"),
+            "attacks": count
+        })
+    attacks_per_hour.reverse()
+    
     return {
         "total_users": total_users,
+        "paid_users": paid_users,
         "total_attacks": total_attacks,
         "attacks_24h": attacks_24h,
         "online_servers": len(online_servers),
@@ -306,6 +322,7 @@ async def get_public_stats():
         "avg_cpu": round(total_cpu, 1),
         "total_ram_used": round(total_ram_used, 1),
         "total_ram_total": round(total_ram_total, 1),
+        "attacks_per_hour": attacks_per_hour,
         "servers": [
             {
                 "name": s["name"],
