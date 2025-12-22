@@ -352,7 +352,13 @@ class Layer7StresserAPITester:
         success, status, data = self.make_request('GET', 'admin/stats', headers=headers)
         
         if success and 'total_users' in data and 'plan_distribution' in data:
-            self.log_test("Admin Stats", True, f"Admin stats loaded: {data['total_users']} users, {data['total_attacks']} attacks")
+            # Check for new required field: attacks_per_hour array with 24 items
+            attacks_per_hour = data.get('attacks_per_hour', [])
+            if not isinstance(attacks_per_hour, list) or len(attacks_per_hour) != 24:
+                self.log_test("Admin Stats", False, f"attacks_per_hour should be array with 24 items, got: {len(attacks_per_hour) if isinstance(attacks_per_hour, list) else 'not array'}")
+                return False
+            
+            self.log_test("Admin Stats", True, f"Admin stats loaded: {data['total_users']} users, {data['total_attacks']} attacks, 24h hourly data available")
             return True
         else:
             self.log_test("Admin Stats", False, f"Status: {status}, Response: {data}")
