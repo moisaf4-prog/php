@@ -13,6 +13,7 @@ import Plans from "./pages/Plans";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import AdminServers from "./pages/AdminServers";
+import AdminUsers from "./pages/AdminUsers";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
 // Context
