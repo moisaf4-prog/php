@@ -94,6 +94,23 @@ class CheckoutRequest(BaseModel):
     plan_id: str
     origin_url: str
 
+class PlanCreate(BaseModel):
+    id: str
+    name: str
+    price: float = 0.0
+    max_time: int = 60
+    max_concurrent: int = 1
+    methods: List[str] = []
+    features: List[str] = []
+
+class PlanUpdate(BaseModel):
+    name: Optional[str] = None
+    price: Optional[float] = None
+    max_time: Optional[int] = None
+    max_concurrent: Optional[int] = None
+    methods: Optional[List[str]] = None
+    features: Optional[List[str]] = None
+
 # ==================== PLANS & METHODS ====================
 
 PLANS = {
