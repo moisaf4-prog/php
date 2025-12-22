@@ -706,9 +706,22 @@ async def admin_get_stats(admin: dict = Depends(get_admin_user)):
     }
 
 @api_router.get("/admin/users")
-async def admin_get_users(admin: dict = Depends(get_admin_user), limit: int = 100):
-    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).limit(limit).to_list(limit)
+async def admin_get_users(admin: dict = Depends(get_admin_user), limit: int = 100, search: str = None):
+    query = {}
+    if search:
+        query = {"$or": [
+            {"username": {"$regex": search, "$options": "i"}},
+            {"telegram_id": {"$regex": search, "$options": "i"}}
+        ]}
+    users = await db.users.find(query, {"_id": 0, "password_hash": 0}).limit(limit).to_list(limit)
     return users
+
+@api_router.get("/admin/users/{user_id}")
+async def admin_get_user(user_id: str, admin: dict = Depends(get_admin_user)):
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
 
 @api_router.get("/admin/attacks")
 async def admin_get_attacks(admin: dict = Depends(get_admin_user), limit: int = 100):
