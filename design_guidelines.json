@@ -1,0 +1,161 @@
+{
+  "identity": {
+    "name": "Layer 7 Stresser Panel",
+    "archetype": "Electric & Neon",
+    "vibe": "Aggressive, Technical, Elite, Anonymous",
+    "core_philosophy": "The user is a commander. The interface is a weapon. Every click should feel like pulling a trigger."
+  },
+  "typography": {
+    "headings": {
+      "family": "Azeret Mono, monospace",
+      "weights": ["700", "900"],
+      "usage": "Page titles, Section headers, Attack method names",
+      "letter_spacing": "tracking-tighter"
+    },
+    "body": {
+      "family": "Rajdhani, sans-serif",
+      "weights": ["400", "500", "600"],
+      "usage": "General text, descriptions, logs",
+      "letter_spacing": "tracking-normal"
+    },
+    "code": {
+      "family": "JetBrains Mono, monospace",
+      "weights": ["400"],
+      "usage": "API keys, Terminal outputs, IP addresses, Attack logs",
+      "letter_spacing": "tracking-wide"
+    },
+    "google_fonts_import": "https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@700;900&family=JetBrains+Mono:wght@400&family=Rajdhani:wght@400;500;600;700&display=swap"
+  },
+  "colors": {
+    "palette": {
+      "background": "#050505",
+      "surface": "#0A0A0A",
+      "surface_highlight": "#111111",
+      "primary": "#00FF94",
+      "primary_dim": "#00cc76",
+      "secondary": "#FF003C",
+      "accent": "#00F0FF",
+      "text_main": "#EDEDED",
+      "text_muted": "#888888",
+      "border": "#222222",
+      "border_active": "#00FF94"
+    },
+    "usage_rules": {
+      "primary": "Success states, 'Start Attack' buttons, Active toggles, Profit metrics",
+      "secondary": "Destructive actions, 'Stop Attack', Error states, Critical alerts",
+      "accent": "Info badges, Selected tabs, Progress bars",
+      "background": "Global page background. NEVER use pure black #000000, use #050505"
+    },
+    "gradients": {
+      "cyber_glow": "linear-gradient(180deg, rgba(0, 255, 148, 0) 0%, rgba(0, 255, 148, 0.1) 100%)",
+      "danger_glow": "linear-gradient(180deg, rgba(255, 0, 60, 0) 0%, rgba(255, 0, 60, 0.1) 100%)"
+    }
+  },
+  "visual_enhancers": {
+    "borders": {
+      "default": "1px solid #222222",
+      "active": "1px solid #00FF94",
+      "error": "1px solid #FF003C",
+      "tech": "Use 'corner-only' borders or dashed lines for a technical feel"
+    },
+    "shadows": {
+      "neon_green": "0 0 10px rgba(0, 255, 148, 0.3), 0 0 20px rgba(0, 255, 148, 0.1)",
+      "neon_red": "0 0 10px rgba(255, 0, 60, 0.3), 0 0 20px rgba(255, 0, 60, 0.1)"
+    },
+    "effects": {
+      "scanlines": "Overlay a repeating linear gradient to simulate CRT monitor scanlines (opacity 0.05)",
+      "glitch": "Use CSS clip-path animations on hover for headings",
+      "glass": "backdrop-blur-md bg-black/80 border border-white/10"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-black font-bold uppercase tracking-widest hover:bg-primary_dim hover:shadow-[0_0_15px_rgba(0,255,148,0.5)] transition-all duration-200 sharp-edges",
+      "destructive": "bg-transparent border border-secondary text-secondary hover:bg-secondary hover:text-black uppercase tracking-widest transition-all duration-200 sharp-edges",
+      "ghost": "text-text_muted hover:text-primary hover:bg-white/5 uppercase tracking-wider"
+    },
+    "cards": {
+      "style": "bg-surface border border-border p-6 relative overflow-hidden group hover:border-primary/50 transition-colors duration-300",
+      "decoration": "Add a small 4px square in the top-right corner that glows when active"
+    },
+    "inputs": {
+      "style": "bg-surface_highlight border-b-2 border-border focus:border-primary outline-none text-code p-3 placeholder:text-text_muted/50 transition-colors duration-200",
+      "label": "uppercase text-xs tracking-widest text-text_muted mb-2 block"
+    },
+    "status_indicators": {
+      "online": "w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_#00FF94]",
+      "offline": "w-2 h-2 rounded-full bg-secondary shadow-[0_0_8px_#FF003C]",
+      "idle": "w-2 h-2 rounded-full bg-text_muted"
+    }
+  },
+  "layout_strategy": {
+    "dashboard": {
+      "grid": "grid-cols-12 gap-4",
+      "sidebar": "col-span-2 hidden lg:block h-screen sticky top-0 border-r border-border bg-black/95 backdrop-blur",
+      "main": "col-span-12 lg:col-span-10 p-6 space-y-6"
+    },
+    "bento_grid": {
+      "hero_stat": "col-span-12 md:col-span-4 row-span-2 bg-surface border border-primary/20",
+      "standard_stat": "col-span-6 md:col-span-2 bg-surface",
+      "feed": "col-span-12 md:col-span-4 row-span-2 bg-surface overflow-y-auto"
+    }
+  },
+  "image_urls": {
+    "backgrounds": [
+      {
+        "url": "https://images.unsplash.com/photo-1643388019606-9173b24bcafb?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzh8MHwxfHNlYXJjaHwyfHxjeWJlcnB1bmslMjBkaWdpdGFsJTIwYWJzdHJhY3QlMjBiYWNrZ3JvdW5kJTIwZGFya3xlbnwwfHx8fDE3NjY0Mzc5MTN8MA&ixlib=rb-4.1.0&q=85",
+        "category": "dashboard_bg",
+        "description": "Abstract digital lines and dots, dark theme. Use with low opacity (10-20%) as a dashboard background overlay."
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1643388019517-cc10ed310a97?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzh8MHwxfHNlYXJjaHwxfHxjeWJlcnB1bmslMjBkaWdpdGFsJTIwYWJzdHJhY3QlMjBiYWNrZ3JvdW5kJTIwZGFya3xlbnwwfHx8fDE3NjY0Mzc5MTN8MA&ixlib=rb-4.1.0&q=85",
+        "category": "auth_bg",
+        "description": "Purple and blue abstract cyberpunk background. Use for Login/Register pages."
+      }
+    ],
+    "icons": {
+      "note": "Use react-icons/si (Simple Icons) for Crypto and Tech logos. Do not use images.",
+      "mapping": {
+        "Bitcoin": "SiBitcoin",
+        "Litecoin": "SiLitecoin",
+        "Monero": "SiMonero",
+        "Tether": "SiTether",
+        "Tron": "SiTron",
+        "Solana": "SiSolana",
+        "Stripe": "SiStripe"
+      }
+    }
+  },
+  "motion": {
+    "libraries": ["framer-motion"],
+    "animations": {
+      "page_transition": {
+        "initial": { "opacity": 0, "y": 20 },
+        "animate": { "opacity": 1, "y": 0 },
+        "exit": { "opacity": 0, "y": -20 },
+        "transition": { "duration": 0.3, "ease": "easeOut" }
+      },
+      "hover_glitch": {
+        "scale": 1.02,
+        "x": [0, -2, 2, -1, 0],
+        "transition": { "duration": 0.2 }
+      }
+    }
+  },
+  "universal_guidelines": [
+    "DO NOT use gradients for text. It reduces readability in data-heavy apps.",
+    "DO NOT use rounded corners > 4px. This is a 'sharp' tool, not a friendly SaaS.",
+    "ALWAYS use 'data-testid' for interactive elements.",
+    "Use 'sonner' for notifications (e.g., 'Attack Sent', 'Payment Received').",
+    "Ensure all charts (Recharts) use the defined palette (Primary for success, Secondary for errors).",
+    "For the 'Attack Terminal', use a monospace font and a blinking cursor effect.",
+    "Crypto payments should show a QR code (use a library like 'qrcode.react')."
+  ],
+  "instructions_to_main_agent": {
+    "step_1": "Install dependencies: `yarn add framer-motion lucide-react recharts sonner clsx tailwind-merge @radix-ui/react-slot @radix-ui/react-dialog @radix-ui/react-dropdown-menu @radix-ui/react-tabs @radix-ui/react-switch @radix-ui/react-slider react-icons`",
+    "step_2": "Update `tailwind.config.js` with the colors defined in this JSON.",
+    "step_3": "Create a `Layout` component that includes the Sidebar and Topbar.",
+    "step_4": "Build the `AttackPanel` component using the 'Control Room' grid strategy.",
+    "step_5": "Implement the `CryptoPayment` modal using the defined icons and QR code logic."
+  }
+}
