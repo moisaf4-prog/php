@@ -139,7 +139,7 @@ export default function Landing() {
       {/* Live Stats Cards */}
       <section className="py-12 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -158,12 +158,27 @@ export default function Landing() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
+              transition={{ delay: 0.12 }}
               className="bg-panel-surface rounded-xl p-6 border border-panel"
             >
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-10 h-10 rounded-lg bg-panel-success/10 flex items-center justify-center">
-                  <Target className="w-5 h-5 text-panel-success" />
+                  <CreditCard className="w-5 h-5 text-panel-success" />
+                </div>
+              </div>
+              <p className="text-3xl font-bold text-panel-success">{stats?.paid_users || 0}</p>
+              <p className="text-panel-muted text-sm">Paid Users</p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="bg-panel-surface rounded-xl p-6 border border-panel"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-panel-accent/10 flex items-center justify-center">
+                  <Target className="w-5 h-5 text-panel-accent" />
                 </div>
               </div>
               <p className="text-3xl font-bold text-panel">{stats?.total_attacks || 0}</p>
@@ -204,6 +219,55 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Attacks Chart - Last 24 Hours */}
+      {stats?.attacks_per_hour?.length > 0 && (
+        <section className="py-8 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-panel-surface rounded-xl p-6 border border-panel">
+              <h3 className="text-lg font-semibold text-panel mb-6 flex items-center gap-2">
+                <Activity className="w-5 h-5 text-panel-primary" />
+                Attacks Last 24 Hours
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={stats.attacks_per_hour}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--midnight-border)" opacity={0.5} />
+                    <XAxis 
+                      dataKey="hour" 
+                      tick={{ fill: "var(--midnight-muted)", fontSize: 11 }} 
+                      axisLine={{ stroke: "var(--midnight-border)" }}
+                      tickLine={false}
+                    />
+                    <YAxis 
+                      tick={{ fill: "var(--midnight-muted)", fontSize: 11 }} 
+                      axisLine={{ stroke: "var(--midnight-border)" }}
+                      tickLine={false}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        background: "var(--midnight-card)", 
+                        border: "1px solid var(--midnight-border)",
+                        borderRadius: "8px",
+                        color: "var(--midnight-text)"
+                      }}
+                      labelStyle={{ color: "var(--midnight-muted)" }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="attacks" 
+                      stroke="var(--midnight-primary)" 
+                      strokeWidth={2}
+                      dot={{ fill: "var(--midnight-primary)", strokeWidth: 0, r: 4 }}
+                      activeDot={{ r: 6, fill: "var(--midnight-primary)" }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* System Resources */}
       {(stats?.total_ram_total > 0 || stats?.avg_cpu > 0) && (
