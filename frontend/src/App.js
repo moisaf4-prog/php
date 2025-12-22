@@ -14,6 +14,8 @@ import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import AdminServers from "./pages/AdminServers";
 import AdminUsers from "./pages/AdminUsers";
+import AdminPlans from "./pages/AdminPlans";
+import FAQ from "./pages/FAQ";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
 // Context
