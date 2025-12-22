@@ -14,6 +14,7 @@ import { SiLitecoin, SiMonero, SiTether, SiSolana, SiTelegram } from "react-icon
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 export default function Landing() {
+  usePageTitle(null); // Uses default title
   const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [stats, setStats] = useState(null);
