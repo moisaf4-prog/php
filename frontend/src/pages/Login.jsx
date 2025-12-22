@@ -11,6 +11,7 @@ import { Label } from "../components/ui/label";
 import { Lock, User, Zap, Moon, Sun } from "lucide-react";
 
 export default function Login() {
+  usePageTitle("Sign In");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
