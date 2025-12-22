@@ -4,6 +4,7 @@ import { useState, useEffect, createContext, useContext } from "react";
 import axios from "axios";
 
 // Pages
+import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
@@ -11,23 +12,26 @@ import AttackLogs from "./pages/AttackLogs";
 import Plans from "./pages/Plans";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import AdminServers from "./pages/AdminServers";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
 // Context
 export const AuthContext = createContext(null);
+export const ThemeContext = createContext(null);
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 export const API = `${BACKEND_URL}/api`;
 
 export const useAuth = () => useContext(AuthContext);
+export const useTheme = () => useContext(ThemeContext);
 
 function ProtectedRoute({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-cyber-bg flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-cyber-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -46,6 +50,17 @@ function ProtectedRoute({ children, adminOnly = false }) {
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem("theme") || "dark");
+
+  useEffect(() => {
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === "dark" ? "light" : "dark");
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -90,24 +105,27 @@ function App() {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, refreshUser }}>
-      <div className="min-h-screen bg-cyber-bg">
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
-            <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/logs" element={<ProtectedRoute><AttackLogs /></ProtectedRoute>} />
-            <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
-            <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-            <Route path="/" element={<Navigate to={user ? "/dashboard" : "/login"} />} />
-          </Routes>
-        </BrowserRouter>
-        <Toaster position="top-right" theme="dark" richColors />
-      </div>
-    </AuthContext.Provider>
+    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+      <AuthContext.Provider value={{ user, login, logout, loading, refreshUser }}>
+        <div className="min-h-screen bg-background text-foreground">
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+              <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/logs" element={<ProtectedRoute><AttackLogs /></ProtectedRoute>} />
+              <Route path="/plans" element={<ProtectedRoute><Plans /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/admin" element={<ProtectedRoute adminOnly><Admin /></ProtectedRoute>} />
+              <Route path="/admin/servers" element={<ProtectedRoute adminOnly><AdminServers /></ProtectedRoute>} />
+              <Route path="/payment/success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+            </Routes>
+          </BrowserRouter>
+          <Toaster position="top-right" theme={theme} richColors />
+        </div>
+      </AuthContext.Provider>
+    </ThemeContext.Provider>
   );
 }
 
