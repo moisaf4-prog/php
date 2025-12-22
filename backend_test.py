@@ -304,6 +304,118 @@ class Layer7StresserAPITester:
             self.log_test("Admin Unauthorized", False, f"Status: {status}, Response: {data}")
             return False
 
+    def test_public_stats(self):
+        """Test public statistics endpoint"""
+        success, status, data = self.make_request('GET', 'public/stats')
+        
+        if success and 'total_users' in data and 'servers' in data:
+            servers_count = len(data.get('servers', []))
+            self.log_test("Public Stats", True, f"Stats loaded: {data['total_users']} users, {servers_count} servers")
+            return True
+        else:
+            self.log_test("Public Stats", False, f"Status: {status}, Response: {data}")
+            return False
+
+    def test_admin_login(self):
+        """Test admin login"""
+        admin_data = {
+            "username": "admin",
+            "password": "Admin123!"
+        }
+        
+        success, status, data = self.make_request('POST', 'auth/login', admin_data, expected_status=200)
+        
+        if success and 'token' in data and data.get('user', {}).get('role') == 'admin':
+            self.admin_token = data['token']
+            self.log_test("Admin Login", True, f"Admin logged in successfully")
+            return True
+        else:
+            self.log_test("Admin Login", False, f"Status: {status}, Response: {data}")
+            return False
+
+    def test_admin_stats(self):
+        """Test admin statistics endpoint"""
+        if not hasattr(self, 'admin_token'):
+            self.log_test("Admin Stats", False, "No admin token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        success, status, data = self.make_request('GET', 'admin/stats', headers=headers)
+        
+        if success and 'total_users' in data and 'plan_distribution' in data:
+            self.log_test("Admin Stats", True, f"Admin stats loaded: {data['total_users']} users, {data['total_attacks']} attacks")
+            return True
+        else:
+            self.log_test("Admin Stats", False, f"Status: {status}, Response: {data}")
+            return False
+
+    def test_admin_servers(self):
+        """Test admin server management endpoints"""
+        if not hasattr(self, 'admin_token'):
+            self.log_test("Admin Servers", False, "No admin token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        
+        # Get servers
+        success, status, data = self.make_request('GET', 'admin/servers', headers=headers)
+        
+        if success and isinstance(data, list):
+            self.log_test("Admin Get Servers", True, f"Found {len(data)} servers")
+            return True
+        else:
+            self.log_test("Admin Get Servers", False, f"Status: {status}, Response: {data}")
+            return False
+
+    def test_admin_settings(self):
+        """Test admin settings endpoints"""
+        if not hasattr(self, 'admin_token'):
+            self.log_test("Admin Settings", False, "No admin token available")
+            return False
+            
+        headers = {'Authorization': f'Bearer {self.admin_token}'}
+        
+        # Get settings
+        success, status, data = self.make_request('GET', 'admin/settings', headers=headers)
+        
+        if success and 'global_max_concurrent' in data and 'maintenance_mode' in data:
+            self.log_test("Admin Get Settings", True, f"Settings loaded: max_concurrent={data['global_max_concurrent']}, maintenance={data['maintenance_mode']}")
+            return True
+        else:
+            self.log_test("Admin Get Settings", False, f"Status: {status}, Response: {data}")
+            return False
+
+    def test_attack_with_server_selection(self):
+        """Test attack creation includes server selection"""
+        if not self.token:
+            self.log_test("Attack Server Selection", False, "No token available")
+            return False
+            
+        attack_data = {
+            "target": "test.com",
+            "port": 80,
+            "method": "HTTP-GET",
+            "duration": 30,
+            "concurrents": 1
+        }
+        
+        success, status, data = self.make_request('POST', 'attacks', attack_data, expected_status=200)
+        
+        if success and 'server' in data:
+            server_name = data.get('server')
+            self.log_test("Attack Server Selection", True, f"Attack assigned to server: {server_name}")
+            
+            # Stop the attack
+            attack_id = data.get('id')
+            if attack_id:
+                time.sleep(1)
+                self.make_request('POST', f'attacks/{attack_id}/stop')
+            
+            return True
+        else:
+            self.log_test("Attack Server Selection", False, f"Status: {status}, Response: {data}")
+            return False
+
     def run_all_tests(self):
         """Run all API tests"""
         print("🚀 Starting Layer 7 Stresser API Tests")
