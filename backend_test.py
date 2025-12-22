@@ -198,7 +198,18 @@ class Layer7StresserAPITester:
         
         if success and 'id' in data and data.get('status') == 'running':
             attack_id = data['id']
-            self.log_test("Create Attack", True, f"Attack started with ID: {attack_id}")
+            
+            # Check for new required field: command with filled placeholders
+            if 'command' not in data:
+                self.log_test("Create Attack", False, f"Attack response missing 'command' field")
+                return False
+            
+            command = data['command']
+            if not command or '{' in command or '}' in command:
+                self.log_test("Create Attack", False, f"Command field has unfilled placeholders: {command}")
+                return False
+            
+            self.log_test("Create Attack", True, f"Attack started with ID: {attack_id}, Command: {command[:50]}...")
             
             # Test stopping the attack
             time.sleep(2)  # Wait a bit before stopping
