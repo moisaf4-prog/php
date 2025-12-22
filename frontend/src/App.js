@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import AdminServers from "./pages/AdminServers";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPlans from "./pages/AdminPlans";
+import AdminNews from "./pages/AdminNews";
 import FAQ from "./pages/FAQ";
 import PaymentSuccess from "./pages/PaymentSuccess";
 
