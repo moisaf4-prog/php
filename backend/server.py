@@ -208,9 +208,18 @@ async def init_admin():
         await db.users.insert_one(admin_user)
         logger.info("Admin user created: admin / Admin123!")
 
+async def init_methods():
+    """Initialize default attack methods in database if not present"""
+    existing = await db.attack_methods.count_documents({})
+    if existing == 0:
+        for method in DEFAULT_ATTACK_METHODS:
+            await db.attack_methods.insert_one(method)
+        logger.info(f"Initialized {len(DEFAULT_ATTACK_METHODS)} default attack methods")
+
 @app.on_event("startup")
 async def startup_event():
     await init_admin()
+    await init_methods()
     await get_global_settings()
 
 # ==================== AUTH ROUTES ====================
