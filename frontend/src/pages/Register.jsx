@@ -16,6 +16,7 @@ export default function Register() {
   const [telegramId, setTelegramId] = useState("");
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
