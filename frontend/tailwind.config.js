@@ -64,6 +64,22 @@ module.exports = {
           muted: "#888888",
           border: "#222222",
         },
+        // Midnight Blue Panel Theme
+        panel: {
+          DEFAULT: "var(--midnight-bg)",
+          surface: "var(--midnight-surface)",
+          card: "var(--midnight-card)",
+          hover: "var(--midnight-hover)",
+          border: "var(--midnight-border)",
+          primary: "var(--midnight-primary)",
+          "primary-dim": "var(--midnight-primary-dim)",
+          accent: "var(--midnight-accent)",
+          success: "var(--midnight-success)",
+          warning: "var(--midnight-warning)",
+          danger: "var(--midnight-danger)",
+          text: "var(--midnight-text)",
+          muted: "var(--midnight-muted)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
