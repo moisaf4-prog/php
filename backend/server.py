@@ -388,7 +388,20 @@ async def admin_delete_method(method_id: str, admin: dict = Depends(get_admin_us
     result = await db.attack_methods.delete_one({"id": method_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Method not found")
-    return {"message": "Method deleted"}
+    
+    # Cascade: Remove method from all plans
+    await db.plans.update_many(
+        {"methods": method_id},
+        {"$pull": {"methods": method_id}}
+    )
+    
+    # Cascade: Remove method commands from all servers
+    await db.attack_servers.update_many(
+        {"method_commands.method_id": method_id},
+        {"$pull": {"method_commands": {"method_id": method_id}}}
+    )
+    
+    return {"message": "Method deleted and removed from plans/servers"}
 
 @api_router.get("/public/stats")
 async def get_public_stats():
