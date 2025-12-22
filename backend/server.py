@@ -434,7 +434,7 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
     if data.concurrents > user_plan["max_concurrent"]:
         raise HTTPException(status_code=400, detail=f"Max concurrent: {user_plan['max_concurrent']}")
     if data.method not in user_plan["methods"]:
-        raise HTTPException(status_code=400, detail=f"Method not available in your plan")
+        raise HTTPException(status_code=400, detail="Method not available in your plan")
     
     user_running = await db.attacks.count_documents({"user_id": user["id"], "status": "running"})
     if user_running >= user_plan["max_concurrent"]:
