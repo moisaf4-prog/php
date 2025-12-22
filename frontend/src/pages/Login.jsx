@@ -3,12 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import axios from "axios";
-import { useAuth, API } from "../App";
+import { useAuth, useTheme, API } from "../App";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { SiTelegram } from "react-icons/si";
-import { Lock, User, Zap } from "lucide-react";
+import { Lock, User, Zap, Moon, Sun } from "lucide-react";
 
 export default function Login() {
   const [username, setUsername] = useState("");
