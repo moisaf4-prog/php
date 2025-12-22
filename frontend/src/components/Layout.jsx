@@ -18,6 +18,7 @@ const adminItems = [
   { path: "/admin", label: "Dashboard", icon: Shield },
   { path: "/admin/users", label: "Users", icon: Users },
   { path: "/admin/servers", label: "Servers", icon: Server },
+  { path: "/admin/plans", label: "Plans", icon: CreditCard },
 ];
 
 export default function Layout({ children }) {
