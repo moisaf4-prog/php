@@ -84,6 +84,18 @@ class ServerUpdate(BaseModel):
 class ServerStatsUpdate(BaseModel):
     cpu_usage: float
     ram_used: float
+
+class NewsCreate(BaseModel):
+    title: str
+    content: str
+    type: str = "info"  # info, update, alert, promo
+    is_active: bool = True
+
+class NewsUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    type: Optional[str] = None
+    is_active: Optional[bool] = None
     ram_total: float
 
 class GlobalSettingsUpdate(BaseModel):
