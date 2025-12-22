@@ -737,6 +737,19 @@ async def admin_update_user_plan(user_id: str, plan_id: str, admin: dict = Depen
     await db.users.update_one({"id": user_id}, {"$set": {"plan": plan_id, "plan_expires": plan_expires}})
     return {"message": "Plan updated"}
 
+class PlanExpirationUpdate(BaseModel):
+    plan_expires: str  # ISO date string
+
+@api_router.put("/admin/users/{user_id}/expiration")
+async def admin_update_user_expiration(user_id: str, data: PlanExpirationUpdate, admin: dict = Depends(get_admin_user)):
+    """Update user's plan expiration date"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    await db.users.update_one({"id": user_id}, {"$set": {"plan_expires": data.plan_expires}})
+    return {"message": "Expiration date updated"}
+
 @api_router.post("/admin/users/{user_id}/role")
 async def admin_update_user_role(user_id: str, role: str, admin: dict = Depends(get_admin_user)):
     if role not in ["user", "admin"]:
