@@ -28,7 +28,7 @@ export default function Layout({ children }) {
   return (
     <div className="min-h-screen bg-cyber-bg flex">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 border-r border-cyber-border bg-black/95 backdrop-blur">
+      <aside className="hidden lg:flex w-64 flex-col h-screen sticky top-0 border-r border-cyber-border bg-black/95 backdrop-blur z-40">
         {/* Logo */}
         <div className="p-6 border-b border-cyber-border">
           <Link to="/dashboard" className="flex items-center gap-3">
@@ -47,7 +47,7 @@ export default function Layout({ children }) {
                 key={item.path}
                 to={item.path}
                 data-testid={`nav-${item.path.slice(1)}`}
-                className={`flex items-center gap-3 px-4 py-3 font-body text-sm uppercase tracking-wider transition-all ${
+                className={`flex items-center gap-3 px-4 py-3 font-body text-sm uppercase tracking-wider transition-all relative z-10 ${
                   isActive
                     ? "bg-cyber-primary/10 text-cyber-primary border-l-2 border-cyber-primary"
                     : "text-cyber-muted hover:text-cyber-text hover:bg-cyber-highlight"
@@ -63,7 +63,7 @@ export default function Layout({ children }) {
             <Link
               to="/admin"
               data-testid="nav-admin"
-              className={`flex items-center gap-3 px-4 py-3 font-body text-sm uppercase tracking-wider transition-all ${
+              className={`flex items-center gap-3 px-4 py-3 font-body text-sm uppercase tracking-wider transition-all relative z-10 ${
                 location.pathname === "/admin"
                   ? "bg-cyber-secondary/10 text-cyber-secondary border-l-2 border-cyber-secondary"
                   : "text-cyber-muted hover:text-cyber-secondary hover:bg-cyber-highlight"
