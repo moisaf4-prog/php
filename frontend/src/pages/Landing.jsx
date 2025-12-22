@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 import { API, useAuth, useTheme } from "../App";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { Button } from "../components/ui/button";
 import Footer from "../components/Footer";
 import { 
