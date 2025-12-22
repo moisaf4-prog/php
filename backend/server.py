@@ -742,6 +742,75 @@ async def admin_update_server_stats(server_id: str, data: ServerStatsUpdate, adm
     )
     return {"message": "Stats updated"}
 
+class CommandExecute(BaseModel):
+    command: str
+
+@api_router.post("/admin/servers/{server_id}/execute")
+async def admin_execute_command(server_id: str, data: CommandExecute, admin: dict = Depends(get_admin_user)):
+    """Execute a command on a server via SSH"""
+    server = await db.attack_servers.find_one({"id": server_id}, {"_id": 0})
+    if not server:
+        raise HTTPException(status_code=404, detail="Server not found")
+    
+    # Mock SSH execution for now (replace with real SSH in production)
+    # In production, you would use paramiko or asyncssh
+    try:
+        import subprocess
+        import shlex
+        
+        # For demo, execute locally. In production, use SSH:
+        # import paramiko
+        # ssh = paramiko.SSHClient()
+        # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # ssh.connect(server['host'], port=server.get('ssh_port', 22), 
+        #            username=server.get('ssh_user', 'root'),
+        #            password=server.get('ssh_password', ''))
+        # stdin, stdout, stderr = ssh.exec_command(data.command)
+        # output = stdout.read().decode()
+        # error = stderr.read().decode()
+        # ssh.close()
+        
+        # For safety in demo, only allow certain commands
+        safe_commands = ['ls', 'pwd', 'whoami', 'uptime', 'df', 'free', 'top', 'ps', 'cat', 'head', 'tail', 'echo', 'date', 'uname']
+        cmd_parts = shlex.split(data.command)
+        base_cmd = cmd_parts[0] if cmd_parts else ''
+        
+        if base_cmd not in safe_commands:
+            return {
+                "success": False,
+                "output": "",
+                "error": f"Command '{base_cmd}' not allowed in demo mode. Allowed: {', '.join(safe_commands)}"
+            }
+        
+        result = subprocess.run(data.command, shell=True, capture_output=True, text=True, timeout=30)
+        return {
+            "success": result.returncode == 0,
+            "output": result.stdout,
+            "error": result.stderr
+        }
+    except subprocess.TimeoutExpired:
+        return {"success": False, "output": "", "error": "Command timed out"}
+    except Exception as e:
+        return {"success": False, "output": "", "error": str(e)}
+
+@api_router.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, admin: dict = Depends(get_admin_user)):
+    """Delete a user"""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.get("role") == "admin" and user.get("username") == "admin":
+        raise HTTPException(status_code=400, detail="Cannot delete main admin account")
+    
+    # Delete user's attacks
+    await db.attacks.delete_many({"user_id": user_id})
+    
+    # Delete user
+    await db.users.delete_one({"id": user_id})
+    
+    return {"message": "User deleted"}
+
 # ==================== ADMIN - SETTINGS ====================
 
 @api_router.get("/admin/settings")
