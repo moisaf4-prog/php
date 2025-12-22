@@ -310,7 +310,16 @@ class Layer7StresserAPITester:
         
         if success and 'total_users' in data and 'servers' in data:
             servers_count = len(data.get('servers', []))
-            self.log_test("Public Stats", True, f"Stats loaded: {data['total_users']} users, {servers_count} servers")
+            
+            # Check for new required fields
+            required_fields = ['avg_cpu', 'total_ram_used', 'total_ram_total']
+            missing_fields = [field for field in required_fields if field not in data]
+            
+            if missing_fields:
+                self.log_test("Public Stats", False, f"Missing required fields: {missing_fields}")
+                return False
+            
+            self.log_test("Public Stats", True, f"Stats loaded: {data['total_users']} users, {servers_count} servers, CPU: {data['avg_cpu']}%, RAM: {data['total_ram_used']}/{data['total_ram_total']}GB")
             return True
         else:
             self.log_test("Public Stats", False, f"Status: {status}, Response: {data}")
