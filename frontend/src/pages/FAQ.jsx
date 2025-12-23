@@ -132,6 +132,7 @@ const faqs = [
 ];
 
 export default function FAQ() {
+  usePageTitle("FAQ");
   const { theme, toggleTheme } = useTheme();
   const [openItems, setOpenItems] = useState({});
   const [activeCategory, setActiveCategory] = useState(null);
