@@ -347,6 +347,31 @@ export default function AdminServers() {
                     </div>
                   </div>
                   
+                  {/* Start/Stop Command Templates */}
+                  <div className="space-y-3 pt-3 border-t border-slate-700">
+                    <h4 className="text-sm font-medium text-slate-300">Command Templates</h4>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-slate-400">Start Command</Label>
+                      <Input 
+                        value={newServer.start_command} 
+                        onChange={(e) => setNewServer(prev => ({ ...prev, start_command: e.target.value }))} 
+                        placeholder="screen -dmS {screen_name} {command}" 
+                        className="bg-slate-800 border-slate-700 text-slate-100 font-mono text-sm" 
+                      />
+                      <p className="text-xs text-slate-500">Variables: {"{screen_name}"}, {"{command}"}, {"{username}"}, {"{attack_id}"}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-slate-400">Stop Command</Label>
+                      <Input 
+                        value={newServer.stop_command} 
+                        onChange={(e) => setNewServer(prev => ({ ...prev, stop_command: e.target.value }))} 
+                        placeholder="pkill -9 -f '{screen_name}'" 
+                        className="bg-slate-800 border-slate-700 text-slate-100 font-mono text-sm" 
+                      />
+                      <p className="text-xs text-slate-500">Variables: {"{screen_name}"}, {"{username}"}, {"{attack_id}"}</p>
+                    </div>
+                  </div>
+                  
                   <Button onClick={handleAddServer} className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                     Add Server
                   </Button>
