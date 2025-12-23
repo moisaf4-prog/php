@@ -162,10 +162,15 @@ class ServerUpdate(BaseModel):
     cpu_usage: Optional[float] = None
     ram_used: Optional[float] = None
     ram_total: Optional[float] = None
+    cpu_model: Optional[str] = None
+    cpu_cores: Optional[int] = None
 
 class ServerStatsUpdate(BaseModel):
     cpu_usage: float
     ram_used: float
+    ram_total: Optional[float] = None
+    cpu_model: Optional[str] = None
+    cpu_cores: Optional[int] = None
 
 class NewsCreate(BaseModel):
     title: str
