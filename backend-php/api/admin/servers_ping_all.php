@@ -24,7 +24,7 @@ foreach ($servers as $server) {
     
     // Try SSH2 extension
     if (function_exists('ssh2_connect')) {
-        $connection = @ssh2_connect($server['host'], $server['ssh_port'] ?? 22, [], [], 5);
+        $connection = @ssh2_connect($server['host'], $server['ssh_port'] ?? 22);
         
         if ($connection) {
             $authResult = false;
