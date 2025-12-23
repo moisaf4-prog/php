@@ -104,13 +104,17 @@ try {
         $_REQUEST['user_id'] = $matches[1];
         require __DIR__ . '/admin/users_delete.php';
     }
-    elseif (preg_match('/^\/admin\/users\/([a-f0-9-]+)\/role$/', $path, $matches) && $method === 'PUT') {
+    elseif (preg_match('/^\/admin\/users\/([a-f0-9-]+)\/role$/', $path, $matches) && ($method === 'PUT' || $method === 'POST')) {
         $_REQUEST['user_id'] = $matches[1];
         require __DIR__ . '/admin/users_role.php';
     }
-    elseif (preg_match('/^\/admin\/users\/([a-f0-9-]+)\/plan$/', $path, $matches) && $method === 'PUT') {
+    elseif (preg_match('/^\/admin\/users\/([a-f0-9-]+)\/plan$/', $path, $matches) && ($method === 'PUT' || $method === 'POST')) {
         $_REQUEST['user_id'] = $matches[1];
         require __DIR__ . '/admin/users_plan.php';
+    }
+    elseif (preg_match('/^\/admin\/users\/([a-f0-9-]+)\/expiration$/', $path, $matches) && $method === 'PUT') {
+        $_REQUEST['user_id'] = $matches[1];
+        require __DIR__ . '/admin/users_expiration.php';
     }
     elseif ($path === '/admin/methods' && $method === 'GET') {
         require __DIR__ . '/admin/methods_list.php';
