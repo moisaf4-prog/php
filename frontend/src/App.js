@@ -119,6 +119,9 @@ function App() {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/faq" element={<FAQ />} />
+              <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/aup" element={<AcceptableUse />} />
               <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
               <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
               <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
