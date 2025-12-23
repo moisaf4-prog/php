@@ -6,24 +6,37 @@ import axios from "axios";
 import { useAuth, API } from "../App";
 import Layout from "../components/Layout";
 import { Button } from "../components/ui/button";
-import { Check, Zap, Clock, Users, CreditCard, ArrowRight } from "lucide-react";
-import { SiLitecoin, SiMonero, SiTether, SiSolana } from "react-icons/si";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Check, Zap, Clock, Users, CreditCard, ArrowRight, X, Loader2 } from "lucide-react";
+import { SiBitcoin, SiLitecoin, SiEthereum, SiMonero } from "react-icons/si";
 
 export default function Plans() {
   usePageTitle("Plans & Pricing");
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [plans, setPlans] = useState([]);
+  const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState("");
+  const [showPaymentModal, setShowPaymentModal] = useState(null);
+  const [selectedCrypto, setSelectedCrypto] = useState("LTC");
+  const [paymentData, setPaymentData] = useState(null);
+  const [checkingPayment, setCheckingPayment] = useState(false);
   const token = localStorage.getItem("token");
 
   useEffect(() => {
-    fetchPlans();
+    fetchData();
   }, []);
 
-  const fetchPlans = async () => {
+  const fetchData = async () => {
     try {
-      const res = await axios.get(`${API}/plans`);
-      setPlans(res.data);
+      const [plansRes, settingsRes] = await Promise.all([
+        axios.get(`${API}/plans`),
+        axios.get(`${API}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: {} }))
+      ]);
+      setPlans(plansRes.data);
+      setSettings(settingsRes.data);
+      if (settingsRes.data?.accepted_crypto?.length > 0) {
+        setSelectedCrypto(settingsRes.data.accepted_crypto[0]);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -31,19 +44,82 @@ export default function Plans() {
 
   const handlePurchase = async (planId) => {
     if (planId === "free") return;
-    setLoading(planId);
+    const plan = plans.find(p => p.id === planId);
+    setShowPaymentModal(plan);
+  };
+
+  const initiatePayment = async () => {
+    if (!showPaymentModal) return;
+    setLoading(showPaymentModal.id);
+    
     try {
-      const res = await axios.post(`${API}/checkout`, {
-        plan_id: planId,
-        origin_url: window.location.origin
+      const res = await axios.post(`${API}/payments/coinpayments/create`, {
+        plan_id: showPaymentModal.id,
+        currency: selectedCrypto
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      window.location.href = res.data.url;
+      
+      setPaymentData(res.data);
+      
+      // Open CoinPayments checkout in new window
+      const cpUrl = `https://www.coinpayments.net/index.php?cmd=_pay_simple&reset=1&merchant=${res.data.merchant_id}&item_name=${encodeURIComponent(res.data.item_name)}&currency=${res.data.currency}&amountf=${res.data.amount}&want_shipping=0&custom=${res.data.custom}&ipn_url=${encodeURIComponent(res.data.ipn_url)}`;
+      
+      window.open(cpUrl, '_blank', 'width=600,height=800');
+      toast.success("Payment window opened. Complete the payment there.");
+      
+      // Start checking payment status
+      startPaymentCheck(res.data.payment_id);
+      
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Checkout failed");
+      toast.error(err.response?.data?.detail || "Failed to create payment");
     } finally {
       setLoading("");
+    }
+  };
+
+  const startPaymentCheck = (paymentId) => {
+    setCheckingPayment(true);
+    
+    const checkInterval = setInterval(async () => {
+      try {
+        const res = await axios.get(`${API}/payments/status/${paymentId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (res.data.status === "completed") {
+          clearInterval(checkInterval);
+          setCheckingPayment(false);
+          setShowPaymentModal(null);
+          setPaymentData(null);
+          toast.success("Payment completed! Your plan has been activated.");
+          if (refreshUser) refreshUser();
+          fetchData();
+        } else if (res.data.status === "failed") {
+          clearInterval(checkInterval);
+          setCheckingPayment(false);
+          toast.error("Payment failed or was cancelled.");
+        }
+      } catch (err) {
+        console.error("Error checking payment:", err);
+      }
+    }, 5000); // Check every 5 seconds
+    
+    // Stop checking after 30 minutes
+    setTimeout(() => {
+      clearInterval(checkInterval);
+      setCheckingPayment(false);
+    }, 30 * 60 * 1000);
+  };
+
+  const getCryptoIcon = (crypto) => {
+    switch(crypto) {
+      case 'BTC': return SiBitcoin;
+      case 'LTC': 
+      case 'LTCT': return SiLitecoin;
+      case 'ETH': return SiEthereum;
+      case 'XMR': return SiMonero;
+      default: return CreditCard;
     }
   };
 
