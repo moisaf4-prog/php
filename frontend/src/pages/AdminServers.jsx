@@ -606,6 +606,15 @@ export default function AdminServers() {
                         </div>
                       )}
                       
+                      {/* Uptime */}
+                      {server.uptime && server.uptime !== "N/A" && (
+                        <div className="mb-4 flex items-center gap-2 text-sm">
+                          <Activity className="w-4 h-4 text-emerald-500" />
+                          <span className="text-slate-500">Uptime:</span>
+                          <span className="text-emerald-400 font-medium">{server.uptime}</span>
+                        </div>
+                      )}
+                      
                       {/* Load bar */}
                       <div className="mb-4">
                         <div className="flex justify-between text-xs text-slate-500 mb-1">
