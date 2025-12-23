@@ -14,6 +14,7 @@ import {
 import { Link } from "react-router-dom";
 
 export default function AdminPlans() {
+  usePageTitle("Plan Management");
   const [plans, setPlans] = useState([]);
   const [methods, setMethods] = useState([]);
   const [loading, setLoading] = useState(true);
