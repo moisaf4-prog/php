@@ -1138,12 +1138,29 @@ async def admin_update_server_stats(server_id: str, data: ServerStatsUpdate, adm
 class CommandExecute(BaseModel):
     command: str
 
+# Safe commands whitelist for SSH terminal
+SAFE_COMMANDS = ['ls', 'pwd', 'whoami', 'uptime', 'df', 'free', 'top', 'htop', 'ps', 'cat', 'head', 'tail', 
+                 'echo', 'date', 'uname', 'hostname', 'w', 'netstat', 'ss', 'ifconfig', 'ip', 'ping',
+                 'screen', 'grep', 'find', 'wc', 'du', 'stat', 'file', 'which', 'whereis']
+
 @api_router.post("/admin/servers/{server_id}/execute")
 async def admin_execute_command(server_id: str, data: CommandExecute, admin: dict = Depends(get_admin_user)):
-    """Execute a command on a server via SSH"""
+    """Execute a command on a server via SSH (admin only, restricted commands)"""
     server = await db.attack_servers.find_one({"id": server_id}, {"_id": 0})
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
+    
+    # Sanitize and validate command
+    command = data.command.strip()
+    if not command:
+        raise HTTPException(status_code=400, detail="Command cannot be empty")
+    
+    # Check for dangerous patterns
+    dangerous_patterns = ['rm -rf', 'mkfs', 'dd if=', '> /dev/', ':(){', 'chmod 777', 
+                          'wget', 'curl -o', 'bash -i', 'nc -e', 'python -c', 'perl -e']
+    for pattern in dangerous_patterns:
+        if pattern in command.lower():
+            raise HTTPException(status_code=403, detail=f"Command contains forbidden pattern: {pattern}")
     
     def execute_ssh_command(host, port, username, password, ssh_key, command):
         ssh = paramiko.SSHClient()
