@@ -559,6 +559,8 @@ async def get_public_stats():
                 "cpu_usage": s.get("cpu_usage", 0),
                 "ram_used": s.get("ram_used", 0),
                 "ram_total": s.get("ram_total", 0),
+                "cpu_model": s.get("cpu_model", ""),
+                "cpu_cores": s.get("cpu_cores", 0),
                 "methods": list(s.get("method_commands", {}).keys()) if isinstance(s.get("method_commands"), dict) else [mc.get("method_id") for mc in s.get("method_commands", [])]
             }
             for s in servers
