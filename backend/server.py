@@ -278,7 +278,41 @@ class MethodUpdate(BaseModel):
 # ==================== HELPERS ====================
 
 def hash_password(password: str) -> str:
-    return hashlib.sha256(password.encode()).hexdigest()
+    """Hash password using bcrypt (secure)"""
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify password against bcrypt hash"""
+    try:
+        # Support both bcrypt and legacy SHA256 hashes
+        if hashed.startswith('$2'):
+            return bcrypt.checkpw(password.encode(), hashed.encode())
+        else:
+            # Legacy SHA256 support for existing users
+            return hashlib.sha256(password.encode()).hexdigest() == hashed
+    except:
+        return False
+
+def sanitize_input(value: str, allow_special: bool = False) -> str:
+    """Sanitize user input to prevent injection attacks"""
+    if not value:
+        return ""
+    # Remove null bytes
+    value = value.replace('\x00', '')
+    if not allow_special:
+        # Remove shell special characters
+        value = re.sub(r'[;&|`$(){}[\]<>\\]', '', value)
+    # Limit length
+    return value[:1000]
+
+def validate_target(target: str) -> bool:
+    """Validate attack target - must be valid URL or IP"""
+    if not target:
+        return False
+    # Allow URLs and IPs only
+    url_pattern = r'^https?://[a-zA-Z0-9][-a-zA-Z0-9.]*[a-zA-Z0-9](:[0-9]+)?(/.*)?$'
+    ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+    return bool(re.match(url_pattern, target) or re.match(ip_pattern, target))
 
 def generate_api_key() -> str:
     return f"strs_{secrets.token_hex(32)}"
