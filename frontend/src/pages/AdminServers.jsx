@@ -52,6 +52,8 @@ export default function AdminServers() {
 
   useEffect(() => {
     fetchData();
+    const interval = setInterval(fetchData, 5000); // Auto-refresh every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
