@@ -375,6 +375,17 @@ export default function Landing() {
                           </div>
                         </div>
                       </div>
+                      
+                      {/* Uptime */}
+                      {server.uptime && server.uptime !== "N/A" && (
+                        <div className="mt-3 pt-3 border-t border-slate-800">
+                          <div className="flex items-center gap-2 text-xs">
+                            <Activity className="w-3.5 h-3.5 text-emerald-500" />
+                            <span className="text-slate-500">Uptime:</span>
+                            <span className="text-emerald-400 font-medium">{server.uptime}</span>
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
                   );
                 })}
