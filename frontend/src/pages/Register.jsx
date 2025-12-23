@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import axios from "axios";
 import { useAuth, useTheme, API } from "../App";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
