@@ -429,19 +429,50 @@ export default function Landing() {
 
         {/* Pricing Preview */}
         <section className="py-16 px-6 bg-slate-900/50">
-          <div className="max-w-7xl mx-auto text-center">
-            <h2 className="text-2xl font-bold text-slate-100 mb-8">Simple, Transparent Pricing</h2>
-            <div className="flex items-center justify-center gap-8 flex-wrap mb-10">
-              <div className="text-center"><p className="text-3xl font-bold text-slate-100">$0</p><p className="text-slate-500 text-sm">Free</p></div>
-              <div className="text-center"><p className="text-3xl font-bold text-blue-500">$19.99</p><p className="text-slate-500 text-sm">Basic</p></div>
-              <div className="text-center"><p className="text-3xl font-bold text-emerald-500">$49.99</p><p className="text-slate-500 text-sm">Premium</p></div>
-              <div className="text-center"><p className="text-3xl font-bold text-amber-500">$99.99</p><p className="text-slate-500 text-sm">Enterprise</p></div>
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-100 mb-4">Simple, Transparent Pricing</h2>
+              <p className="text-slate-400">Choose the plan that fits your testing needs</p>
             </div>
-            <Link to="/register">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl px-8">
-                View All Plans <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {plans.map((plan) => (
+                <motion.div 
+                  key={plan.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`rounded-xl p-6 border ${getPlanColor(plan.id)}`}
+                >
+                  <h3 className={`text-lg font-bold mb-2 ${getPlanTextColor(plan.id)}`}>{plan.name}</h3>
+                  <div className="flex items-baseline gap-1 mb-4">
+                    <span className={`text-3xl font-bold ${getPlanTextColor(plan.id)}`}>
+                      ${plan.price || 0}
+                    </span>
+                    {plan.duration_days && <span className="text-slate-500 text-sm">/{plan.duration_days} days</span>}
+                  </div>
+                  <ul className="space-y-2 text-sm text-slate-400 mb-6">
+                    <li className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-slate-500" />
+                      Max {plan.max_time}s per attack
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Users className="w-4 h-4 text-slate-500" />
+                      {plan.max_concurrent} concurrent
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="w-4 h-4 text-slate-500" />
+                      {plan.methods?.length || 0} methods
+                    </li>
+                  </ul>
+                </motion.div>
+              ))}
+            </div>
+            <div className="text-center mt-10">
+              <Link to="/register">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl px-8">
+                  Get Started <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </section>
       </main>
