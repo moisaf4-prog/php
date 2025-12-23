@@ -15,6 +15,7 @@ import { SiTelegram } from "react-icons/si";
 import { Link } from "react-router-dom";
 
 export default function AdminUsers() {
+  usePageTitle("User Management");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
