@@ -884,44 +884,54 @@ async def admin_execute_command(server_id: str, data: CommandExecute, admin: dic
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     
-    # Mock SSH execution for now (replace with real SSH in production)
-    # In production, you would use paramiko or asyncssh
-    try:
-        import subprocess
-        import shlex
+    def execute_ssh_command(host, port, username, password, ssh_key, command):
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         
-        # For demo, execute locally. In production, use SSH:
-        # import paramiko
-        # ssh = paramiko.SSHClient()
-        # ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        # ssh.connect(server['host'], port=server.get('ssh_port', 22), 
-        #            username=server.get('ssh_user', 'root'),
-        #            password=server.get('ssh_password', ''))
-        # stdin, stdout, stderr = ssh.exec_command(data.command)
-        # output = stdout.read().decode()
-        # error = stderr.read().decode()
-        # ssh.close()
-        
-        # For safety in demo, only allow certain commands
-        safe_commands = ['ls', 'pwd', 'whoami', 'uptime', 'df', 'free', 'top', 'ps', 'cat', 'head', 'tail', 'echo', 'date', 'uname']
-        cmd_parts = shlex.split(data.command)
-        base_cmd = cmd_parts[0] if cmd_parts else ''
-        
-        if base_cmd not in safe_commands:
+        try:
+            if ssh_key:
+                from io import StringIO
+                key = paramiko.RSAKey.from_private_key(StringIO(ssh_key))
+                ssh.connect(host, port=port, username=username, pkey=key, timeout=10)
+            else:
+                ssh.connect(host, port=port, username=username, password=password, timeout=10)
+            
+            stdin, stdout, stderr = ssh.exec_command(command, timeout=30)
+            output = stdout.read().decode()
+            error = stderr.read().decode()
+            exit_code = stdout.channel.recv_exit_status()
+            
+            ssh.close()
             return {
-                "success": False,
-                "output": "",
-                "error": f"Command '{base_cmd}' not allowed in demo mode. Allowed: {', '.join(safe_commands)}"
+                "success": exit_code == 0,
+                "output": output,
+                "error": error
             }
-        
-        result = subprocess.run(data.command, shell=True, capture_output=True, text=True, timeout=30)
-        return {
-            "success": result.returncode == 0,
-            "output": result.stdout,
-            "error": result.stderr
-        }
-    except subprocess.TimeoutExpired:
-        return {"success": False, "output": "", "error": "Command timed out"}
+        except paramiko.AuthenticationException:
+            return {"success": False, "output": "", "error": "SSH authentication failed"}
+        except paramiko.SSHException as e:
+            return {"success": False, "output": "", "error": f"SSH error: {str(e)}"}
+        except Exception as e:
+            return {"success": False, "output": "", "error": str(e)}
+        finally:
+            try:
+                ssh.close()
+            except:
+                pass
+    
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(
+            None,
+            execute_ssh_command,
+            server.get('host'),
+            server.get('ssh_port', 22),
+            server.get('ssh_user', 'root'),
+            server.get('ssh_password'),
+            server.get('ssh_key'),
+            data.command
+        )
+        return result
     except Exception as e:
         return {"success": False, "output": "", "error": str(e)}
 
