@@ -16,6 +16,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import { Link } from "react-router-dom";
 
 export default function Admin() {
+  usePageTitle("Admin Dashboard");
   const [stats, setStats] = useState(null);
   const [attacks, setAttacks] = useState([]);
   const [methods, setMethods] = useState([]);
