@@ -863,10 +863,10 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
     attack = {
         "id": attack_id,
         "user_id": user["id"],
-        "username": user["username"],
-        "target": data.target,
+        "username": sanitize_input(user["username"]),
+        "target": sanitized_target,  # Use sanitized target
         "port": data.port,
-        "method": data.method,
+        "method": sanitize_input(data.method),
         "duration": data.duration,
         "concurrents": data.concurrents,
         "server_id": server["id"],
