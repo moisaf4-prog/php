@@ -435,36 +435,54 @@ export default function Landing() {
               <p className="text-slate-400">Choose the plan that fits your testing needs</p>
             </div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {plans.map((plan) => (
-                <motion.div 
-                  key={plan.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`rounded-xl p-6 border ${getPlanColor(plan.id)}`}
-                >
-                  <h3 className={`text-lg font-bold mb-2 ${getPlanTextColor(plan.id)}`}>{plan.name}</h3>
-                  <div className="flex items-baseline gap-1 mb-4">
-                    <span className={`text-3xl font-bold ${getPlanTextColor(plan.id)}`}>
-                      ${plan.price || 0}
-                    </span>
-                    {plan.duration_days && <span className="text-slate-500 text-sm">/{plan.duration_days} days</span>}
-                  </div>
-                  <ul className="space-y-2 text-sm text-slate-400 mb-6">
-                    <li className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-slate-500" />
-                      Max {plan.max_time}s per attack
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-slate-500" />
-                      {plan.max_concurrent} concurrent
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <Zap className="w-4 h-4 text-slate-500" />
-                      {plan.methods?.length || 0} methods
-                    </li>
-                  </ul>
-                </motion.div>
-              ))}
+              {plans.map((plan) => {
+                const formatTime = (s) => s >= 60 ? `${s/60}m` : `${s}s`;
+                return (
+                  <motion.div 
+                    key={plan.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className={`rounded-xl p-6 border ${getPlanColor(plan.id)}`}
+                  >
+                    <h3 className={`text-lg font-bold mb-2 ${getPlanTextColor(plan.id)}`}>{plan.name}</h3>
+                    <div className="flex items-baseline gap-1 mb-4">
+                      <span className={`text-3xl font-bold ${getPlanTextColor(plan.id)}`}>
+                        ${plan.price || 0}
+                      </span>
+                      {plan.duration_days && <span className="text-slate-500 text-sm">/{plan.duration_days}d</span>}
+                    </div>
+                    
+                    <div className="space-y-2 text-sm mb-4 pb-4 border-b border-slate-800">
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Duration</span>
+                        <span className="text-slate-300 font-medium">{formatTime(plan.max_time)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Concurrent</span>
+                        <span className="text-slate-300 font-medium">{plan.max_concurrent}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-slate-500">Methods</span>
+                        <span className="text-slate-300 font-medium">{plan.methods?.length || 0}</span>
+                      </div>
+                    </div>
+                    
+                    {plan.methods?.length > 0 && (
+                      <div className="space-y-1">
+                        {plan.methods.slice(0, 3).map((method, i) => (
+                          <div key={i} className="flex items-center gap-2 text-xs">
+                            <Zap className="w-3 h-3 text-emerald-500" />
+                            <span className="text-slate-400">{method}</span>
+                          </div>
+                        ))}
+                        {plan.methods.length > 3 && (
+                          <p className="text-xs text-slate-500">+{plan.methods.length - 3} more</p>
+                        )}
+                      </div>
+                    )}
+                  </motion.div>
+                );
+              })}
             </div>
             <div className="text-center mt-10">
               <Link to="/register">
