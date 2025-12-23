@@ -174,7 +174,7 @@ export default function Landing() {
                   </Button>
                 </Link>
                 <Link to="/login">
-                  <Button size="lg" variant="outline" className="border-slate-700 text-slate-300 hover:bg-slate-800 rounded-xl px-8 h-12">
+                  <Button size="lg" variant="outline" className="border-slate-700 bg-transparent text-slate-300 hover:bg-slate-800 hover:text-white hover:border-slate-600 rounded-xl px-8 h-12">
                     View Demo
                   </Button>
                 </Link>
