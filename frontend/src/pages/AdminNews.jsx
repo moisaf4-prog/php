@@ -16,6 +16,7 @@ import {
 import { Link } from "react-router-dom";
 
 export default function AdminNews() {
+  usePageTitle("News Management");
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
