@@ -522,7 +522,7 @@ export default function AdminServers() {
                       </div>
                       
                       {/* Server Details */}
-                      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                         <div>
                           <p className="text-xs text-slate-500">Status</p>
                           <p className={`text-sm font-medium ${server.status === "online" ? "text-emerald-500" : "text-red-500"}`}>
@@ -541,21 +541,65 @@ export default function AdminServers() {
                           <p className="text-xs text-slate-500">Max Concurrent</p>
                           <p className="text-sm font-mono text-slate-300">{server.max_concurrent}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Cpu className="w-4 h-4 text-slate-500" />
-                          <div>
-                            <p className="text-xs text-slate-500">CPU</p>
-                            <p className="text-sm font-mono text-slate-300">{server.cpu_usage || 0}%</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <HardDrive className="w-4 h-4 text-slate-500" />
-                          <div>
-                            <p className="text-xs text-slate-500">RAM</p>
-                            <p className="text-sm font-mono text-slate-300">{server.ram_used || 0}/{server.ram_total || 0}GB</p>
-                          </div>
-                        </div>
                       </div>
+                      
+                      {/* CPU Model & Stats */}
+                      {server.cpu_model && (
+                        <div className="mb-4 p-3 bg-slate-800/50 rounded-lg border border-slate-700">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Cpu className="w-4 h-4 text-blue-400" />
+                            <p className="text-sm font-medium text-slate-200">
+                              {server.cpu_model} {server.cpu_cores ? `(${server.cpu_cores} Cores)` : ''}
+                            </p>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">CPU Usage</p>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all ${server.cpu_usage > 80 ? 'bg-red-500' : server.cpu_usage > 50 ? 'bg-yellow-500' : 'bg-emerald-500'}`} 
+                                    style={{ width: `${server.cpu_usage || 0}%` }} 
+                                  />
+                                </div>
+                                <span className="text-sm font-mono text-slate-300">{server.cpu_usage || 0}%</span>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1">RAM Usage</p>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+                                  <div 
+                                    className={`h-full transition-all ${(server.ram_used / server.ram_total * 100) > 80 ? 'bg-red-500' : (server.ram_used / server.ram_total * 100) > 50 ? 'bg-yellow-500' : 'bg-emerald-500'}`} 
+                                    style={{ width: `${server.ram_total ? (server.ram_used / server.ram_total * 100) : 0}%` }} 
+                                  />
+                                </div>
+                                <span className="text-sm font-mono text-slate-300">{server.ram_used || 0}/{server.ram_total || 0}GB</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Fallback stats if no CPU model */}
+                      {!server.cpu_model && (
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div className="flex items-center gap-2">
+                            <Cpu className="w-4 h-4 text-slate-500" />
+                            <div>
+                              <p className="text-xs text-slate-500">CPU</p>
+                              <p className="text-sm font-mono text-slate-300">{server.cpu_usage || 0}%</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <HardDrive className="w-4 h-4 text-slate-500" />
+                            <div>
+                              <p className="text-xs text-slate-500">RAM</p>
+                              <p className="text-sm font-mono text-slate-300">{server.ram_used || 0}/{server.ram_total || 0}GB</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       
                       {/* Load bar */}
                       <div className="mb-4">
