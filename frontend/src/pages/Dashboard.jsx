@@ -13,6 +13,7 @@ import { Slider } from "../components/ui/slider";
 import { Target, Zap, Clock, Users, Activity, Square, AlertTriangle } from "lucide-react";
 
 export default function Dashboard() {
+  usePageTitle("Attack Panel");
   const { user } = useAuth();
   const token = localStorage.getItem("token");
   
