@@ -193,6 +193,11 @@ class NewsUpdate(BaseModel):
 class GlobalSettingsUpdate(BaseModel):
     global_max_concurrent: Optional[int] = None
     maintenance_mode: Optional[bool] = None
+    # CoinPayments Settings
+    coinpayments_merchant_id: Optional[str] = None
+    coinpayments_ipn_secret: Optional[str] = None
+    coinpayments_enabled: Optional[bool] = None
+    accepted_crypto: Optional[List[str]] = None  # e.g., ["BTC", "LTC", "ETH", "USDT"]
 
 class CheckoutRequest(BaseModel):
     plan_id: str
