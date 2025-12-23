@@ -842,6 +842,7 @@ async def admin_ping_server(server_id: str, admin: dict = Depends(get_admin_user
         "ram_total": stats.get("ram_total", 0),
         "cpu_model": stats.get("cpu_model", "Unknown"),
         "cpu_cores": stats.get("cpu_cores", 1),
+        "uptime": stats.get("uptime", "N/A"),
         "last_ping": datetime.now(timezone.utc).isoformat()
     }
     
@@ -857,6 +858,7 @@ async def admin_ping_server(server_id: str, admin: dict = Depends(get_admin_user
         "ram_total": stats.get("ram_total", 0),
         "cpu_model": stats.get("cpu_model", "Unknown"),
         "cpu_cores": stats.get("cpu_cores", 1),
+        "uptime": stats.get("uptime", "N/A"),
         "error": stats.get("error")
     }
 
