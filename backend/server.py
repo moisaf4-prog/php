@@ -819,6 +819,11 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
     if settings.get("maintenance_mode"):
         raise HTTPException(status_code=503, detail="System is under maintenance")
     
+    # Validate and sanitize target
+    sanitized_target = sanitize_input(data.target, allow_special=False)
+    if not validate_target(sanitized_target):
+        raise HTTPException(status_code=400, detail="Invalid target. Must be a valid URL (https://...) or IP address")
+    
     # Check cooldown - user's last attack must be at least 1 second ago
     last_attack = await db.attacks.find_one(
         {"user_id": user["id"]},
