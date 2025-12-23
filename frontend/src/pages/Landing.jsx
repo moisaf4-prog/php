@@ -19,6 +19,7 @@ export default function Landing() {
   const { theme, toggleTheme } = useTheme();
   const [stats, setStats] = useState(null);
   const [news, setNews] = useState([]);
+  const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -29,12 +30,14 @@ export default function Landing() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, newsRes] = await Promise.all([
+      const [statsRes, newsRes, plansRes] = await Promise.all([
         axios.get(`${API}/public/stats`),
-        axios.get(`${API}/news`)
+        axios.get(`${API}/news`),
+        axios.get(`${API}/plans`)
       ]);
       setStats(statsRes.data);
       setNews(newsRes.data);
+      setPlans(plansRes.data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -46,6 +49,26 @@ export default function Landing() {
     if (percent < 50) return "bg-emerald-500";
     if (percent < 80) return "bg-amber-500";
     return "bg-red-500";
+  };
+
+  const getPlanColor = (planId) => {
+    switch(planId) {
+      case 'free': return 'border-slate-700 bg-slate-900';
+      case 'basic': return 'border-blue-500/50 bg-blue-500/5';
+      case 'premium': return 'border-emerald-500/50 bg-emerald-500/5';
+      case 'enterprise': return 'border-amber-500/50 bg-amber-500/5';
+      default: return 'border-slate-700 bg-slate-900';
+    }
+  };
+
+  const getPlanTextColor = (planId) => {
+    switch(planId) {
+      case 'free': return 'text-slate-100';
+      case 'basic': return 'text-blue-500';
+      case 'premium': return 'text-emerald-500';
+      case 'enterprise': return 'text-amber-500';
+      default: return 'text-slate-100';
+    }
   };
 
   const getNewsTypeColor = (type) => {
