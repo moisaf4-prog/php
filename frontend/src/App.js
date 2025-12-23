@@ -18,6 +18,9 @@ import AdminPlans from "./pages/AdminPlans";
 import AdminNews from "./pages/AdminNews";
 import FAQ from "./pages/FAQ";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import AcceptableUse from "./pages/AcceptableUse";
 
 // Context
 export const AuthContext = createContext(null);
