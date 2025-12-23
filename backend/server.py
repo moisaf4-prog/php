@@ -696,8 +696,13 @@ async def admin_update_server(server_id: str, data: ServerUpdate, admin: dict = 
     update_data = {}
     for k, v in data.model_dump().items():
         if v is not None:
-            if k == "method_commands":
-                update_data[k] = [{"method_id": mc.method_id, "command": mc.command} for mc in v]
+            if k == "method_commands" and v:
+                # Handle both dict and MethodCommand objects
+                update_data[k] = [
+                    {"method_id": mc.get("method_id") if isinstance(mc, dict) else mc.method_id, 
+                     "command": mc.get("command") if isinstance(mc, dict) else mc.command} 
+                    for mc in v
+                ]
             else:
                 update_data[k] = v
     
@@ -705,7 +710,7 @@ async def admin_update_server(server_id: str, data: ServerUpdate, admin: dict = 
         raise HTTPException(status_code=400, detail="No data to update")
     
     result = await db.attack_servers.update_one({"id": server_id}, {"$set": update_data})
-    if result.modified_count == 0:
+    if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Server not found")
     return {"message": "Server updated"}
 
