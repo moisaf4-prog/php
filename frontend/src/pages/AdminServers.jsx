@@ -47,7 +47,9 @@ export default function AdminServers() {
     ssh_user: "root",
     ssh_password: "",
     max_concurrent: 100,
-    method_commands: []
+    method_commands: [],
+    start_command: "screen -dmS {screen_name} {command}",
+    stop_command: "screen -S {screen_name} -X quit 2>/dev/null; pkill -9 -f '{screen_name}' 2>/dev/null || true"
   });
 
   useEffect(() => {
