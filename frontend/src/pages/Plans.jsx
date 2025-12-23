@@ -242,6 +242,94 @@ export default function Plans() {
             );
           })}
         </div>
+
+        {/* Payment Modal */}
+        {showPaymentModal && (
+          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-slate-900 rounded-xl p-6 max-w-md w-full border border-slate-800"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-slate-100">Complete Payment</h3>
+                <button 
+                  onClick={() => { setShowPaymentModal(null); setPaymentData(null); }}
+                  className="text-slate-400 hover:text-slate-100"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="bg-slate-800 rounded-lg p-4 mb-6">
+                <div className="flex justify-between items-center">
+                  <span className="text-slate-400">Plan</span>
+                  <span className="text-slate-100 font-bold">{showPaymentModal.name}</span>
+                </div>
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-slate-400">Amount</span>
+                  <span className="text-2xl font-bold text-emerald-500">${showPaymentModal.price.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {!paymentData ? (
+                <>
+                  <div className="mb-6">
+                    <label className="text-sm text-slate-400 mb-2 block">Select Cryptocurrency</label>
+                    <Select value={selectedCrypto} onValueChange={setSelectedCrypto}>
+                      <SelectTrigger className="bg-slate-800 border-slate-700 text-slate-100">
+                        <SelectValue placeholder="Select crypto" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-900 border-slate-700">
+                        {(settings?.accepted_crypto || ['BTC', 'LTC', 'ETH', 'USDT']).map((crypto) => {
+                          const Icon = getCryptoIcon(crypto);
+                          return (
+                            <SelectItem key={crypto} value={crypto} className="text-slate-100">
+                              <div className="flex items-center gap-2">
+                                <Icon className="w-4 h-4" />
+                                {crypto}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <Button
+                    onClick={initiatePayment}
+                    disabled={loading === showPaymentModal.id}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg"
+                  >
+                    {loading === showPaymentModal.id ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Pay with {selectedCrypto} <ArrowRight className="w-4 h-4" />
+                      </span>
+                    )}
+                  </Button>
+                </>
+              ) : (
+                <div className="text-center">
+                  {checkingPayment && (
+                    <div className="flex flex-col items-center gap-4">
+                      <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                      <p className="text-slate-300">Waiting for payment confirmation...</p>
+                      <p className="text-xs text-slate-500">
+                        Complete the payment in the opened window. This page will update automatically.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <p className="text-xs text-slate-500 mt-4 text-center">
+                Payments are processed securely via CoinPayments
+              </p>
+            </motion.div>
+          </div>
+        )}
       </div>
     </Layout>
   );
