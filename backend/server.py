@@ -14,6 +14,7 @@ import secrets
 import jwt
 import asyncio
 import random
+import paramiko
 from emergentintegrations.payments.stripe.checkout import StripeCheckout, CheckoutSessionRequest
 
 ROOT_DIR = Path(__file__).parent
