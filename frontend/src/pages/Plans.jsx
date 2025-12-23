@@ -7,13 +7,14 @@ import { useAuth, API } from "../App";
 import Layout from "../components/Layout";
 import { Button } from "../components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Check, Zap, Clock, Users, CreditCard, ArrowRight, X, Loader2 } from "lucide-react";
-import { SiBitcoin, SiLitecoin, SiEthereum, SiMonero } from "react-icons/si";
+import { Check, Zap, Clock, Users, CreditCard, ArrowRight, X, Loader2, Shield, Star } from "lucide-react";
+import { SiBitcoin, SiLitecoin, SiEthereum, SiMonero, SiDogecoin } from "react-icons/si";
 
 export default function Plans() {
   usePageTitle("Plans & Pricing");
   const { user, refreshUser } = useAuth();
   const [plans, setPlans] = useState([]);
+  const [methods, setMethods] = useState([]);
   const [settings, setSettings] = useState(null);
   const [loading, setLoading] = useState("");
   const [showPaymentModal, setShowPaymentModal] = useState(null);
@@ -28,11 +29,13 @@ export default function Plans() {
 
   const fetchData = async () => {
     try {
-      const [plansRes, settingsRes] = await Promise.all([
+      const [plansRes, methodsRes, settingsRes] = await Promise.all([
         axios.get(`${API}/plans`),
+        axios.get(`${API}/methods`),
         axios.get(`${API}/admin/settings`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: {} }))
       ]);
       setPlans(plansRes.data);
+      setMethods(methodsRes.data);
       setSettings(settingsRes.data);
       if (settingsRes.data?.accepted_crypto?.length > 0) {
         setSelectedCrypto(settingsRes.data.accepted_crypto[0]);
@@ -40,6 +43,11 @@ export default function Plans() {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const getMethodName = (methodId) => {
+    const method = methods.find(m => m.id === methodId);
+    return method?.name || methodId;
   };
 
   const handlePurchase = async (planId) => {
@@ -68,7 +76,6 @@ export default function Plans() {
       window.open(cpUrl, '_blank', 'width=600,height=800');
       toast.success("Payment window opened. Complete the payment there.");
       
-      // Start checking payment status
       startPaymentCheck(res.data.payment_id);
       
     } catch (err) {
@@ -103,9 +110,8 @@ export default function Plans() {
       } catch (err) {
         console.error("Error checking payment:", err);
       }
-    }, 5000); // Check every 5 seconds
+    }, 5000);
     
-    // Stop checking after 30 minutes
     setTimeout(() => {
       clearInterval(checkInterval);
       setCheckingPayment(false);
@@ -119,44 +125,37 @@ export default function Plans() {
       case 'LTCT': return SiLitecoin;
       case 'ETH': return SiEthereum;
       case 'XMR': return SiMonero;
+      case 'DOGE': return SiDogecoin;
       default: return CreditCard;
     }
   };
 
-  const planColors = {
-    free: "border-slate-700",
-    basic: "border-blue-500",
-    premium: "border-emerald-500",
-    enterprise: "border-amber-500"
+  const planStyles = {
+    free: { border: "border-slate-700", bg: "bg-slate-900", text: "text-slate-400", btn: "bg-slate-800 text-slate-500" },
+    basic: { border: "border-blue-500/50", bg: "bg-blue-500/5", text: "text-blue-400", btn: "bg-blue-600 hover:bg-blue-700" },
+    premium: { border: "border-emerald-500/50", bg: "bg-emerald-500/5", text: "text-emerald-400", btn: "bg-emerald-600 hover:bg-emerald-700" },
+    enterprise: { border: "border-amber-500/50", bg: "bg-amber-500/5", text: "text-amber-400", btn: "bg-amber-600 hover:bg-amber-700" }
   };
 
-  const planBtnColors = {
-    basic: "bg-blue-600 hover:bg-blue-700",
-    premium: "bg-emerald-600 hover:bg-emerald-700",
-    enterprise: "bg-amber-600 hover:bg-amber-700"
+  const formatDuration = (seconds) => {
+    if (seconds >= 3600) return `${seconds / 3600}h`;
+    if (seconds >= 60) return `${seconds / 60}m`;
+    return `${seconds}s`;
   };
 
   return (
     <Layout>
-      <div data-testid="plans-page" className="space-y-8">
+      <div className="space-y-8 max-w-6xl mx-auto">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-slate-100">Choose Your Plan</h1>
-          <p className="text-slate-400 mt-2">Select a plan that fits your testing needs</p>
-          
-          <div className="flex items-center justify-center gap-4 mt-4">
-            <span className="text-slate-500 text-sm">We accept:</span>
-            <SiLitecoin className="w-5 h-5 text-slate-400 hover:text-blue-500 transition-colors" title="Litecoin" />
-            <SiMonero className="w-5 h-5 text-slate-400 hover:text-orange-500 transition-colors" title="Monero" />
-            <SiTether className="w-5 h-5 text-slate-400 hover:text-green-500 transition-colors" title="USDT" />
-            <SiSolana className="w-5 h-5 text-slate-400 hover:text-purple-500 transition-colors" title="Solana" />
-            <CreditCard className="w-5 h-5 text-slate-400" title="Card" />
-          </div>
+          <h1 className="text-3xl font-bold text-slate-100 mb-3">Choose Your Plan</h1>
+          <p className="text-slate-400">Select the plan that best fits your testing needs</p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {plans.map((plan, idx) => {
             const isCurrentPlan = user?.plan === plan.id;
-            const colorClass = planColors[plan.id] || "border-slate-700";
+            const style = planStyles[plan.id] || planStyles.free;
+            const planMethods = plan.methods || [];
             
             return (
               <motion.div
@@ -164,76 +163,87 @@ export default function Plans() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.1 }}
-                className={`relative bg-slate-900 border-2 ${colorClass} rounded-xl p-6 flex flex-col`}
+                className={`relative ${style.bg} border ${style.border} rounded-xl p-6 flex flex-col`}
               >
                 {isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold uppercase rounded-full">
-                    Current
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-bold uppercase rounded-full flex items-center gap-1">
+                    <Star className="w-3 h-3" /> Active
                   </div>
                 )}
                 
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-slate-100 uppercase tracking-wider">
+                {plan.id === "enterprise" && !isCurrentPlan && (
+                  <div className="absolute -top-3 right-4 px-2 py-1 bg-amber-500 text-black text-xs font-bold uppercase rounded-full">
+                    Popular
+                  </div>
+                )}
+                
+                <div className="mb-5">
+                  <h3 className={`text-lg font-bold uppercase tracking-wider ${style.text}`}>
                     {plan.name}
                   </h3>
                   <div className="flex items-baseline gap-1 mt-2">
                     <span className="text-3xl font-bold text-slate-100">
-                      ${plan.price.toFixed(2)}
+                      ${plan.price?.toFixed(2) || '0.00'}
                     </span>
-                    <span className="text-slate-500 text-sm">/month</span>
+                    {plan.duration_days && (
+                      <span className="text-slate-500 text-sm">/{plan.duration_days}d</span>
+                    )}
                   </div>
                 </div>
                 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-blue-500" />
-                    <span className="text-slate-300 text-sm">
-                      {plan.max_time >= 60 ? `${plan.max_time / 60}min` : `${plan.max_time}s`} max attack
-                    </span>
+                {/* Key Features */}
+                <div className="space-y-2 mb-5 pb-5 border-b border-slate-800">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 text-sm">Duration</span>
+                    <span className="text-slate-200 font-medium">{formatDuration(plan.max_time)}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-cyan-500" />
-                    <span className="text-slate-300 text-sm">
-                      {plan.max_concurrent} concurrent
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 text-sm">Concurrent</span>
+                    <span className="text-slate-200 font-medium">{plan.max_concurrent}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Zap className="w-4 h-4 text-amber-500" />
-                    <span className="text-slate-300 text-sm">
-                      {plan.methods.length} methods
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 text-sm">Methods</span>
+                    <span className="text-slate-200 font-medium">{planMethods.length}</span>
                   </div>
                 </div>
                 
-                <div className="flex-1 space-y-2 mb-6">
-                  {plan.features?.map((feature, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      <Check className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="text-slate-400 text-sm">{feature}</span>
+                {/* Methods List */}
+                <div className="flex-1 mb-5">
+                  <p className="text-xs text-slate-500 uppercase tracking-wider mb-2">Included Methods</p>
+                  {planMethods.length > 0 ? (
+                    <div className="space-y-1.5">
+                      {planMethods.map((methodId, i) => (
+                        <div key={i} className="flex items-center gap-2">
+                          <Check className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+                          <span className="text-slate-300 text-sm">{getMethodName(methodId)}</span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <p className="text-slate-600 text-sm italic">No methods included</p>
+                  )}
                 </div>
                 
+                {/* Action Button */}
                 {plan.id === "free" ? (
                   <Button disabled className="w-full bg-slate-800 text-slate-500 cursor-not-allowed rounded-lg">
-                    Free Plan
+                    Free Tier
                   </Button>
                 ) : isCurrentPlan ? (
-                  <Button disabled className="w-full bg-blue-600/20 text-blue-500 cursor-not-allowed rounded-lg">
-                    Active
+                  <Button disabled className="w-full bg-blue-600/20 text-blue-400 cursor-not-allowed rounded-lg">
+                    <Check className="w-4 h-4 mr-2" /> Active Plan
                   </Button>
                 ) : (
                   <Button
-                    data-testid={`buy-${plan.id}`}
                     onClick={() => handlePurchase(plan.id)}
                     disabled={loading === plan.id}
-                    className={`w-full ${planBtnColors[plan.id] || 'bg-blue-600 hover:bg-blue-700'} text-white font-bold uppercase tracking-wider rounded-lg`}
+                    className={`w-full ${style.btn} text-white font-semibold rounded-lg`}
                   >
                     {loading === plan.id ? (
-                      <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      <Loader2 className="w-5 h-5 animate-spin" />
                     ) : (
                       <span className="flex items-center gap-2">
-                        Purchase <ArrowRight className="w-4 h-4" />
+                        Upgrade <ArrowRight className="w-4 h-4" />
                       </span>
                     )}
                   </Button>
@@ -241,6 +251,18 @@ export default function Plans() {
               </motion.div>
             );
           })}
+        </div>
+
+        {/* Crypto Accepted */}
+        <div className="text-center pt-4">
+          <p className="text-slate-500 text-sm mb-3">Accepted Cryptocurrencies</p>
+          <div className="flex items-center justify-center gap-4">
+            <SiBitcoin className="w-6 h-6 text-orange-500" title="Bitcoin" />
+            <SiLitecoin className="w-6 h-6 text-blue-400" title="Litecoin" />
+            <SiEthereum className="w-6 h-6 text-purple-400" title="Ethereum" />
+            <SiDogecoin className="w-6 h-6 text-yellow-500" title="Dogecoin" />
+            <SiMonero className="w-6 h-6 text-orange-400" title="Monero" />
+          </div>
         </div>
 
         {/* Payment Modal */}
@@ -254,7 +276,7 @@ export default function Plans() {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-slate-100">Complete Payment</h3>
                 <button 
-                  onClick={() => { setShowPaymentModal(null); setPaymentData(null); }}
+                  onClick={() => { setShowPaymentModal(null); setPaymentData(null); setCheckingPayment(false); }}
                   className="text-slate-400 hover:text-slate-100"
                 >
                   <X className="w-5 h-5" />
@@ -268,7 +290,7 @@ export default function Plans() {
                 </div>
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-slate-400">Amount</span>
-                  <span className="text-2xl font-bold text-emerald-500">${showPaymentModal.price.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-emerald-500">${showPaymentModal.price?.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -281,7 +303,7 @@ export default function Plans() {
                         <SelectValue placeholder="Select crypto" />
                       </SelectTrigger>
                       <SelectContent className="bg-slate-900 border-slate-700">
-                        {(settings?.accepted_crypto || ['BTC', 'LTC', 'ETH', 'USDT']).map((crypto) => {
+                        {(settings?.accepted_crypto || ['BTC', 'LTC', 'ETH', 'DOGE']).map((crypto) => {
                           const Icon = getCryptoIcon(crypto);
                           return (
                             <SelectItem key={crypto} value={crypto} className="text-slate-100">
@@ -311,21 +333,21 @@ export default function Plans() {
                   </Button>
                 </>
               ) : (
-                <div className="text-center">
+                <div className="text-center py-4">
                   {checkingPayment && (
                     <div className="flex flex-col items-center gap-4">
                       <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                      <p className="text-slate-300">Waiting for payment confirmation...</p>
+                      <p className="text-slate-300">Waiting for payment...</p>
                       <p className="text-xs text-slate-500">
-                        Complete the payment in the opened window. This page will update automatically.
+                        Complete payment in the new window. This will update automatically.
                       </p>
                     </div>
                   )}
                 </div>
               )}
 
-              <p className="text-xs text-slate-500 mt-4 text-center">
-                Payments are processed securely via CoinPayments
+              <p className="text-xs text-slate-500 mt-4 text-center flex items-center justify-center gap-1">
+                <Shield className="w-3 h-3" /> Secure payment via CoinPayments
               </p>
             </motion.div>
           </div>
