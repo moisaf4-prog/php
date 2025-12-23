@@ -810,39 +810,67 @@ async def admin_delete_server(server_id: str, admin: dict = Depends(get_admin_us
 
 @api_router.post("/admin/servers/{server_id}/ping")
 async def admin_ping_server(server_id: str, admin: dict = Depends(get_admin_user)):
+    """Ping server via SSH and get real CPU/RAM stats and CPU model"""
     server = await db.attack_servers.find_one({"id": server_id}, {"_id": 0})
     if not server:
         raise HTTPException(status_code=404, detail="Server not found")
     
-    # Simulate ping with random stats (in production, would actually ping)
-    is_online = random.random() > 0.1
-    cpu_usage = round(random.uniform(10, 80), 1) if is_online else 0
-    ram_used = round(random.uniform(2, 12), 1) if is_online else 0
-    ram_total = 16.0
+    # Get real stats via SSH
+    loop = asyncio.get_event_loop()
+    stats = await loop.run_in_executor(
+        None,
+        get_server_stats_via_ssh,
+        server.get('host'),
+        server.get('ssh_port', 22),
+        server.get('ssh_user', 'root'),
+        server.get('ssh_password'),
+        server.get('ssh_key')
+    )
+    
+    # Update database with real stats
+    update_data = {
+        "status": stats.get("status", "offline"),
+        "cpu_usage": stats.get("cpu_usage", 0),
+        "ram_used": stats.get("ram_used", 0),
+        "ram_total": stats.get("ram_total", 0),
+        "cpu_model": stats.get("cpu_model", "Unknown"),
+        "cpu_cores": stats.get("cpu_cores", 1),
+        "last_ping": datetime.now(timezone.utc).isoformat()
+    }
     
     await db.attack_servers.update_one(
         {"id": server_id},
-        {"$set": {
-            "status": "online" if is_online else "offline",
-            "cpu_usage": cpu_usage,
-            "ram_used": ram_used,
-            "ram_total": ram_total,
-            "last_ping": datetime.now(timezone.utc).isoformat()
-        }}
+        {"$set": update_data}
     )
-    return {"status": "online" if is_online else "offline", "cpu_usage": cpu_usage, "ram_used": ram_used, "ram_total": ram_total}
+    
+    return {
+        "status": stats.get("status", "offline"),
+        "cpu_usage": stats.get("cpu_usage", 0),
+        "ram_used": stats.get("ram_used", 0),
+        "ram_total": stats.get("ram_total", 0),
+        "cpu_model": stats.get("cpu_model", "Unknown"),
+        "cpu_cores": stats.get("cpu_cores", 1),
+        "error": stats.get("error")
+    }
 
 @api_router.post("/admin/servers/{server_id}/stats")
 async def admin_update_server_stats(server_id: str, data: ServerStatsUpdate, admin: dict = Depends(get_admin_user)):
     """Manual update of server stats (for external monitoring)"""
+    update_data = {
+        "cpu_usage": data.cpu_usage,
+        "ram_used": data.ram_used,
+        "last_ping": datetime.now(timezone.utc).isoformat()
+    }
+    if data.ram_total is not None:
+        update_data["ram_total"] = data.ram_total
+    if data.cpu_model is not None:
+        update_data["cpu_model"] = data.cpu_model
+    if data.cpu_cores is not None:
+        update_data["cpu_cores"] = data.cpu_cores
+        
     await db.attack_servers.update_one(
         {"id": server_id},
-        {"$set": {
-            "cpu_usage": data.cpu_usage,
-            "ram_used": data.ram_used,
-            "ram_total": data.ram_total,
-            "last_ping": datetime.now(timezone.utc).isoformat()
-        }}
+        {"$set": update_data}
     )
     return {"message": "Stats updated"}
 
