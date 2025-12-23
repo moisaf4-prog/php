@@ -934,6 +934,8 @@ async def admin_create_server(data: ServerCreate, admin: dict = Depends(get_admi
         "max_concurrent": data.max_concurrent,
         "current_load": 0,
         "method_commands": method_commands_list,
+        "start_command": data.start_command,
+        "stop_command": data.stop_command,
         "is_active": True,
         "status": "offline",
         "cpu_usage": 0,
