@@ -202,12 +202,12 @@ export default function Dashboard() {
           <form onSubmit={handleAttack} className="space-y-6">
             <div className="grid md:grid-cols-3 gap-4">
               <div className="md:col-span-2 space-y-2">
-                <Label className="text-xs uppercase tracking-wider text-slate-500">Target URL / IP</Label>
+                <Label className="text-xs uppercase tracking-wider text-slate-500">Target URL</Label>
                 <Input
                   data-testid="attack-target"
                   value={target}
                   onChange={(e) => setTarget(e.target.value)}
-                  placeholder="https://example.com or 192.168.1.1"
+                  placeholder="https://example.com"
                   className="bg-slate-800 border-slate-700 text-slate-100 font-mono rounded-lg"
                 />
               </div>
