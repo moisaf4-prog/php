@@ -29,7 +29,7 @@ $stats = [
 // Try SSH connection
 if (function_exists('ssh2_connect')) {
     try {
-        $connection = @ssh2_connect($server['host'], $server['ssh_port'] ?? 22, [], [], 10);
+        $connection = @ssh2_connect($server['host'], $server['ssh_port'] ?? 22);
         
         if ($connection) {
             $authResult = false;
