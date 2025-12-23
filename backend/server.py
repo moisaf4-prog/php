@@ -744,10 +744,10 @@ async def execute_attack_on_server(server: dict, attack: dict, username: str):
     
     return True, command, screen_name
 
-async def stop_attack_on_server(server: dict, screen_name: str):
-    """Stop attack on server by killing the screen session"""
-    # Kill the screen session and any related processes
-    kill_command = f"screen -S {screen_name} -X quit 2>/dev/null; pkill -9 -f '{screen_name}' 2>/dev/null || true"
+async def stop_attack_on_server(server: dict, screen_name: str, username: str = "", attack_id: str = ""):
+    """Stop attack on server using server's custom stop command template"""
+    # Build stop command from server template
+    kill_command = build_stop_command(server, screen_name, username, attack_id)
     
     logger.info(f"Stopping attack on server {server['name']}: {kill_command}")
     
