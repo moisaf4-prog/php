@@ -12,6 +12,7 @@ import { SiTelegram } from "react-icons/si";
 import { Lock, User, Zap, Moon, Sun } from "lucide-react";
 
 export default function Register() {
+  usePageTitle("Sign Up");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [telegramId, setTelegramId] = useState("");
