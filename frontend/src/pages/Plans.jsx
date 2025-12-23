@@ -194,16 +194,16 @@ export default function Plans() {
                 {/* Key Features */}
                 <div className="space-y-2 mb-5 pb-5 border-b border-slate-800">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500 text-sm">Duration</span>
-                    <span className="text-slate-200 font-medium">{formatDuration(plan.max_time)}</span>
+                    <span className="text-slate-500 text-sm">Max Time</span>
+                    <span className="text-slate-200 font-medium">{formatDuration(plan.max_time)}/attack</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 text-sm">Concurrent</span>
-                    <span className="text-slate-200 font-medium">{plan.max_concurrent}</span>
+                    <span className="text-slate-200 font-medium">{plan.max_concurrent} attacks</span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 text-sm">Methods</span>
-                    <span className="text-slate-200 font-medium">{planMethods.length}</span>
+                    <span className="text-slate-200 font-medium">{planMethods.length} available</span>
                   </div>
                 </div>
                 
