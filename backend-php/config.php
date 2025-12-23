@@ -12,12 +12,12 @@ ini_set('log_errors', 1);
 // Database Configuration
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'layer7top');
-define('DB_USER', 'your_db_user');
-define('DB_PASS', 'your_db_password');
+define('DB_USER', 'root');
+define('DB_PASS', '');
 define('DB_CHARSET', 'utf8mb4');
 
 // JWT Configuration
-define('JWT_SECRET', 'change-this-to-a-very-long-random-secret-key-2024');
+define('JWT_SECRET', 'stresser-secret-key-2024-production');
 define('JWT_ALGORITHM', 'HS256');
 define('JWT_EXPIRATION', 604800); // 7 days in seconds
 
