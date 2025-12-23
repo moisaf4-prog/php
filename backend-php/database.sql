@@ -187,5 +187,5 @@ ON DUPLICATE KEY UPDATE plan_id=plan_id;
 
 -- Create default admin user (password: admin)
 INSERT INTO users (id, username, password_hash, role, plan) VALUES
-(UUID(), 'admin', '$2y$10$YourBcryptHashHere', 'admin', 'enterprise')
+(UUID(), 'admin', '$2y$10$CKdALtAoapNfSZN9ymQMd.TOHS3.udvVOFFY1bGkKY9FD.t7SeDFO', 'admin', 'enterprise')
 ON DUPLICATE KEY UPDATE username=username;
