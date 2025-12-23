@@ -991,6 +991,138 @@ async def admin_update_settings(data: GlobalSettingsUpdate, admin: dict = Depend
     await db.settings.update_one({"type": "global"}, {"$set": update_data})
     return {"message": "Settings updated"}
 
+# ==================== COINPAYMENTS ====================
+
+class CoinPaymentRequest(BaseModel):
+    plan_id: str
+    currency: str = "LTCT"  # Default to Litecoin Testnet for testing
+
+@api_router.post("/payments/coinpayments/create")
+async def create_coinpayment(data: CoinPaymentRequest, user: dict = Depends(get_current_user)):
+    """Create a CoinPayments transaction"""
+    settings = await get_global_settings()
+    
+    if not settings.get("coinpayments_enabled"):
+        raise HTTPException(status_code=400, detail="CoinPayments is not enabled")
+    
+    merchant_id = settings.get("coinpayments_merchant_id")
+    if not merchant_id:
+        raise HTTPException(status_code=400, detail="CoinPayments not configured")
+    
+    # Get plan details
+    plan = await db.plans.find_one({"id": data.plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan not found")
+    
+    if plan.get("price", 0) == 0:
+        raise HTTPException(status_code=400, detail="Cannot purchase free plan")
+    
+    # Create payment record
+    payment_id = str(uuid.uuid4())
+    payment = {
+        "id": payment_id,
+        "user_id": user["id"],
+        "plan_id": data.plan_id,
+        "amount": plan["price"],
+        "currency": data.currency,
+        "status": "pending",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.payments.insert_one(payment)
+    
+    # Return payment details for frontend to use with CoinPayments button
+    return {
+        "payment_id": payment_id,
+        "merchant_id": merchant_id,
+        "amount": plan["price"],
+        "currency": data.currency,
+        "item_name": f"Layer7Top - {plan['name']} Plan",
+        "custom": payment_id,
+        "ipn_url": f"{os.environ.get('BACKEND_URL', '')}/api/payments/coinpayments/ipn"
+    }
+
+@api_router.post("/payments/coinpayments/ipn")
+async def coinpayments_ipn(request: Request):
+    """Handle CoinPayments IPN (Instant Payment Notification)"""
+    settings = await get_global_settings()
+    ipn_secret = settings.get("coinpayments_ipn_secret", "")
+    
+    # Get form data
+    form_data = await request.form()
+    data = dict(form_data)
+    
+    # Verify HMAC signature if IPN secret is set
+    if ipn_secret:
+        hmac_header = request.headers.get("HMAC")
+        if hmac_header:
+            import hmac as hmac_lib
+            body = await request.body()
+            expected_hmac = hmac_lib.new(
+                ipn_secret.encode(),
+                body,
+                hashlib.sha512
+            ).hexdigest()
+            if hmac_header != expected_hmac:
+                logger.warning("CoinPayments IPN: Invalid HMAC signature")
+                raise HTTPException(status_code=400, detail="Invalid signature")
+    
+    # Process payment
+    payment_id = data.get("custom")
+    status = int(data.get("status", 0))
+    
+    if not payment_id:
+        return {"status": "error", "message": "No payment ID"}
+    
+    payment = await db.payments.find_one({"id": payment_id}, {"_id": 0})
+    if not payment:
+        return {"status": "error", "message": "Payment not found"}
+    
+    # Status codes: https://www.coinpayments.net/merchant-tools-ipn
+    # >= 100 = payment complete, >= 0 && < 100 = pending, < 0 = error/cancelled
+    if status >= 100 or status == 2:
+        # Payment complete - activate plan
+        plan = await db.plans.find_one({"id": payment["plan_id"]}, {"_id": 0})
+        if plan:
+            duration_days = plan.get("duration_days", 30)
+            expires_at = (datetime.now(timezone.utc) + timedelta(days=duration_days)).isoformat()
+            
+            await db.users.update_one(
+                {"id": payment["user_id"]},
+                {"$set": {"plan": payment["plan_id"], "plan_expires": expires_at}}
+            )
+            
+            await db.payments.update_one(
+                {"id": payment_id},
+                {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
+            )
+            logger.info(f"CoinPayments: Payment {payment_id} completed, plan activated for user {payment['user_id']}")
+    elif status < 0:
+        # Payment failed/cancelled
+        await db.payments.update_one(
+            {"id": payment_id},
+            {"$set": {"status": "failed"}}
+        )
+        logger.info(f"CoinPayments: Payment {payment_id} failed/cancelled")
+    else:
+        # Payment pending
+        await db.payments.update_one(
+            {"id": payment_id},
+            {"$set": {"status": "pending"}}
+        )
+    
+    return {"status": "ok"}
+
+@api_router.get("/payments/status/{payment_id}")
+async def get_payment_status(payment_id: str, user: dict = Depends(get_current_user)):
+    """Check payment status"""
+    payment = await db.payments.find_one(
+        {"id": payment_id, "user_id": user["id"]}, 
+        {"_id": 0}
+    )
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return payment
+
 # ==================== NEWS ====================
 
 @api_router.get("/news")
