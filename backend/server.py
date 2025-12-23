@@ -102,15 +102,20 @@ def get_server_stats_via_ssh(host: str, port: int, username: str, password: str 
         cores = stdout.read().decode().strip()
         stats["cpu_cores"] = int(cores) if cores.isdigit() else 1
         
+        # Get server uptime
+        stdin, stdout, stderr = ssh.exec_command("uptime -p 2>/dev/null || uptime | awk -F'up ' '{print $2}' | awk -F',' '{print $1}'", timeout=5)
+        uptime_output = stdout.read().decode().strip()
+        stats["uptime"] = uptime_output if uptime_output else "Unknown"
+        
         ssh.close()
         return stats
         
     except paramiko.AuthenticationException:
-        return {"status": "offline", "error": "Authentication failed", "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A"}
+        return {"status": "offline", "error": "Authentication failed", "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A", "uptime": "N/A"}
     except paramiko.SSHException as e:
-        return {"status": "offline", "error": f"SSH error: {str(e)}", "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A"}
+        return {"status": "offline", "error": f"SSH error: {str(e)}", "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A", "uptime": "N/A"}
     except Exception as e:
-        return {"status": "offline", "error": str(e), "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A"}
+        return {"status": "offline", "error": str(e), "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A", "uptime": "N/A"}
     finally:
         try:
             ssh.close()
