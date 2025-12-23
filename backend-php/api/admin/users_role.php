@@ -8,11 +8,14 @@ requireAdmin();
 $userId = $_REQUEST['user_id'] ?? '';
 $data = getJsonBody();
 
+// Support query param OR body
+$role = $_GET['role'] ?? $data['role'] ?? null;
+
 if (empty($userId)) {
     errorResponse('User ID required', 400);
 }
 
-if (!isset($data['role']) || !in_array($data['role'], ['user', 'admin'])) {
+if (!$role || !in_array($role, ['user', 'admin'])) {
     errorResponse('Valid role required (user/admin)', 400);
 }
 
@@ -22,6 +25,6 @@ if (!$user) {
     errorResponse('User not found', 404);
 }
 
-db()->update('users', ['role' => $data['role']], 'id = ?', [$userId]);
+db()->update('users', ['role' => $role], 'id = ?', [$userId]);
 
 jsonResponse(['message' => 'Role updated successfully']);
