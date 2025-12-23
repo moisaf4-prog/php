@@ -852,14 +852,14 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
     
     return {"id": attack_id, "status": "running", "server": server["name"], "screen_name": screen_name}
 
-async def schedule_attack_end(attack_id: str, server_id: str, concurrents: int, duration: int, screen_name: str, server: dict):
+async def schedule_attack_end(attack_id: str, server_id: str, concurrents: int, duration: int, screen_name: str, server: dict, username: str = ""):
     """Wait for attack duration then stop it"""
     await asyncio.sleep(duration)
     attack = await db.attacks.find_one({"id": attack_id}, {"_id": 0})
     if attack and attack["status"] == "running":
         # Stop the attack on server
         if screen_name and server:
-            await stop_attack_on_server(server, screen_name)
+            await stop_attack_on_server(server, screen_name, username, attack_id)
         
         await db.attacks.update_one(
             {"id": attack_id},
@@ -880,8 +880,9 @@ async def stop_attack(attack_id: str, user: dict = Depends(get_current_user)):
     
     # Stop the attack on server via SSH
     screen_name = attack.get("screen_name")
+    username = attack.get("username", "")
     if screen_name and server:
-        await stop_attack_on_server(server, screen_name)
+        await stop_attack_on_server(server, screen_name, username, attack_id)
     
     await db.attacks.update_one(
         {"id": attack_id},
