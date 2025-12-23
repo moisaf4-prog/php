@@ -32,7 +32,8 @@ $command = trim($data['command']);
 $allowedPrefixes = [
     'ls', 'pwd', 'whoami', 'hostname', 'uptime', 'df', 'free', 'top -bn1',
     'cat /proc/cpuinfo', 'cat /proc/meminfo', 'ps aux', 'netstat', 'ss',
-    'screen -list', 'screen -ls', 'pkill', 'kill', 'echo', 'date', 'w'
+    'screen -list', 'screen -ls', 'pkill', 'kill', 'echo', 'date', 'w',
+    'cd', 'head', 'tail', 'grep', 'wc', 'du', 'find', 'which', 'env'
 ];
 
 $isAllowed = false;
@@ -47,13 +48,41 @@ if (!$isAllowed) {
     errorResponse('Command not allowed. Allowed: ' . implode(', ', $allowedPrefixes), 403);
 }
 
-// Execute via SSH using phpseclib would be ideal, but we'll use shell command for now
-// This is a simplified version - in production use phpseclib
-try {
+$output = null;
+$error = null;
+
+// Try SSH2 extension first (preferred)
+if (function_exists('ssh2_connect')) {
+    try {
+        $connection = @ssh2_connect($server['host'], $server['ssh_port'] ?? 22);
+        
+        if ($connection) {
+            $authResult = false;
+            
+            if (!empty($server['ssh_password'])) {
+                $authResult = @ssh2_auth_password($connection, $server['ssh_user'], $server['ssh_password']);
+            }
+            
+            if ($authResult) {
+                $stream = ssh2_exec($connection, $command);
+                stream_set_blocking($stream, true);
+                $output = stream_get_contents($stream);
+                fclose($stream);
+            } else {
+                $error = 'SSH authentication failed';
+            }
+        } else {
+            $error = 'SSH connection failed';
+        }
+    } catch (Exception $e) {
+        $error = 'SSH error: ' . $e->getMessage();
+    }
+} else {
+    // Fallback to sshpass
     $sshCommand = sprintf(
         "sshpass -p %s ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -p %d %s@%s %s 2>&1",
         escapeshellarg($server['ssh_password'] ?? ''),
-        $server['ssh_port'],
+        $server['ssh_port'] ?? 22,
         escapeshellarg($server['ssh_user']),
         escapeshellarg($server['host']),
         escapeshellarg($command)
@@ -61,10 +90,20 @@ try {
     
     $output = shell_exec($sshCommand);
     
+    if ($output === null) {
+        $error = 'Command execution failed';
+    }
+}
+
+if ($error) {
     jsonResponse([
-        'output' => $output ?? 'Command executed (no output)',
+        'output' => $error,
+        'command' => $command,
+        'error' => true
+    ]);
+} else {
+    jsonResponse([
+        'output' => $output ?: '(no output)',
         'command' => $command
     ]);
-} catch (Exception $e) {
-    errorResponse('SSH execution failed: ' . $e->getMessage(), 500);
 }
