@@ -845,7 +845,7 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
         raise HTTPException(status_code=500, detail="Failed to start attack on server")
     
     await db.attacks.insert_one(attack)
-    asyncio.create_task(schedule_attack_end(attack_id, server["id"], data.concurrents, data.duration, screen_name, server))
+    asyncio.create_task(schedule_attack_end(attack_id, server["id"], data.concurrents, data.duration, screen_name, server, user["username"]))
     
     # 1 second cooldown enforced by sleeping
     await asyncio.sleep(1)
