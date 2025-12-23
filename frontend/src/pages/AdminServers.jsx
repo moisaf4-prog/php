@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { usePageTitle } from "../hooks/usePageTitle";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import axios from "axios";
