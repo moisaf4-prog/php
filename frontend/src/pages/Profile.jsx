@@ -13,6 +13,7 @@ import { SiTelegram } from "react-icons/si";
 import { Link } from "react-router-dom";
 
 export default function Profile() {
+  usePageTitle("Profile");
   const { user, refreshUser } = useAuth();
   const [regenerating, setRegenerating] = useState(false);
   const token = localStorage.getItem("token");
