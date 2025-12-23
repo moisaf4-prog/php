@@ -10,6 +10,7 @@ import { Check, Zap, Clock, Users, CreditCard, ArrowRight } from "lucide-react";
 import { SiLitecoin, SiMonero, SiTether, SiSolana } from "react-icons/si";
 
 export default function Plans() {
+  usePageTitle("Plans & Pricing");
   const { user } = useAuth();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState("");
