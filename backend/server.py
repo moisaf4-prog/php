@@ -188,7 +188,6 @@ class NewsUpdate(BaseModel):
     content: Optional[str] = None
     type: Optional[str] = None
     is_active: Optional[bool] = None
-    ram_total: float
 
 class GlobalSettingsUpdate(BaseModel):
     global_max_concurrent: Optional[int] = None
