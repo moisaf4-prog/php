@@ -52,8 +52,13 @@ export default function AdminServers() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Auto-refresh every 5 seconds
-    return () => clearInterval(interval);
+    pingAllServers(); // Initial ping
+    const dataInterval = setInterval(fetchData, 5000); // Refresh data every 5 seconds
+    const pingInterval = setInterval(pingAllServers, 15000); // Ping all servers every 15 seconds
+    return () => {
+      clearInterval(dataInterval);
+      clearInterval(pingInterval);
+    };
   }, []);
 
   useEffect(() => {
@@ -61,6 +66,16 @@ export default function AdminServers() {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [terminalOutput]);
+
+  const pingAllServers = async () => {
+    try {
+      await axios.post(`${API}/admin/servers/ping-all`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+    } catch (err) {
+      console.error("Failed to ping servers:", err);
+    }
+  };
 
   const fetchData = async () => {
     try {
