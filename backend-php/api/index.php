@@ -45,6 +45,9 @@ try {
     elseif ($path === '/auth/me' && $method === 'GET') {
         require __DIR__ . '/auth/me.php';
     }
+    elseif ($path === '/auth/regenerate-key' && $method === 'POST') {
+        require __DIR__ . '/user/apikey.php';
+    }
     elseif ($path === '/attacks' && $method === 'GET') {
         require __DIR__ . '/attacks/list.php';
     }
