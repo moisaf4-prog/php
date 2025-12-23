@@ -179,6 +179,10 @@ try {
         $_REQUEST['payment_id'] = $matches[1];
         require __DIR__ . '/payments/status.php';
     }
+    elseif (preg_match('/^\/checkout\/status\/(.+)$/', $path, $matches) && $method === 'GET') {
+        $_REQUEST['session_id'] = $matches[1];
+        require __DIR__ . '/payments/checkout_status.php';
+    }
     
     // 404
     else {
