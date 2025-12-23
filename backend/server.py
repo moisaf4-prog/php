@@ -948,6 +948,8 @@ async def admin_update_server(server_id: str, data: ServerUpdate, admin: dict = 
 async def admin_delete_server(server_id: str, admin: dict = Depends(get_admin_user)):
     result = await db.attack_servers.delete_one({"id": server_id})
     if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Server not found")
+    return {"message": "Server deleted"}
 
 @api_router.post("/admin/servers/ping-all")
 async def admin_ping_all_servers(admin: dict = Depends(get_admin_user)):
