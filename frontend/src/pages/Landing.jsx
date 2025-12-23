@@ -8,7 +8,7 @@ import { Button } from "../components/ui/button";
 import Footer from "../components/Footer";
 import { 
   Zap, Target, Users, Activity, Server, ArrowRight, 
-  Moon, Sun, Shield, Cpu, HardDrive, CreditCard, Newspaper, Bell, ExternalLink, HelpCircle
+  Moon, Sun, Shield, Cpu, HardDrive, CreditCard, Newspaper, Bell, ExternalLink, HelpCircle, Clock
 } from "lucide-react";
 import { SiLitecoin, SiMonero, SiTether, SiSolana, SiTelegram } from "react-icons/si";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
