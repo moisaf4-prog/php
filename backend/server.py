@@ -153,6 +153,9 @@ class ServerCreate(BaseModel):
     ssh_password: Optional[str] = None
     max_concurrent: int = 100
     method_commands: List[MethodCommand]  # Custom command per method
+    # Custom start/stop command templates
+    start_command: str = "screen -dmS {screen_name} {command}"
+    stop_command: str = "screen -S {screen_name} -X quit 2>/dev/null; pkill -9 -f '{screen_name}' 2>/dev/null || true"
 
 class ServerUpdate(BaseModel):
     name: Optional[str] = None
@@ -169,6 +172,8 @@ class ServerUpdate(BaseModel):
     ram_total: Optional[float] = None
     cpu_model: Optional[str] = None
     cpu_cores: Optional[int] = None
+    start_command: Optional[str] = None
+    stop_command: Optional[str] = None
 
 class ServerStatsUpdate(BaseModel):
     cpu_usage: float
