@@ -25,6 +25,7 @@ import {
 } from "../components/ui/dialog";
 
 export default function AdminServers() {
+  usePageTitle("Server Management");
   const [servers, setServers] = useState([]);
   const [methods, setMethods] = useState([]);
   const [settings, setSettings] = useState({ global_max_concurrent: 500, maintenance_mode: false });
