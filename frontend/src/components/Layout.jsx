@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, useTheme } from "../App";
 import { motion } from "framer-motion";
 import { 
-  Zap, Target, History, CreditCard, User, Shield, LogOut, Menu, X, Moon, Sun, Server, Users, Newspaper, ExternalLink
+  Zap, Target, History, CreditCard, User, Shield, LogOut, Menu, X, Moon, Sun, Server, Users, Newspaper, ExternalLink, Settings
 } from "lucide-react";
 import { SiTelegram } from "react-icons/si";
 import { useState } from "react";
@@ -21,6 +21,7 @@ const adminItems = [
   { path: "/admin/servers", label: "Servers", icon: Server },
   { path: "/admin/plans", label: "Plans", icon: CreditCard },
   { path: "/admin/news", label: "News", icon: Newspaper },
+  { path: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function Layout({ children }) {
