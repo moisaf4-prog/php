@@ -311,7 +311,15 @@ async def get_admin_user(user: dict = Depends(get_current_user)):
 async def get_global_settings():
     settings = await db.settings.find_one({"type": "global"}, {"_id": 0})
     if not settings:
-        settings = {"type": "global", "global_max_concurrent": 500, "maintenance_mode": False}
+        settings = {
+            "type": "global", 
+            "global_max_concurrent": 500, 
+            "maintenance_mode": False,
+            "coinpayments_merchant_id": "",
+            "coinpayments_ipn_secret": "",
+            "coinpayments_enabled": False,
+            "accepted_crypto": ["BTC", "LTC", "ETH", "USDT", "DOGE"]
+        }
         await db.settings.insert_one(settings)
     return settings
 
