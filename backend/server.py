@@ -530,6 +530,51 @@ async def get_public_stats():
     attacks_24h = await db.attacks.count_documents({"started_at": {"$gte": day_ago}})
     
     servers = await db.attack_servers.find({"is_active": True}, {"_id": 0}).to_list(100)
+    
+    # Auto-ping servers that haven't been pinged in the last 10 seconds
+    loop = asyncio.get_event_loop()
+    for server in servers:
+        last_ping = server.get("last_ping")
+        should_ping = True
+        if last_ping:
+            try:
+                last_ping_dt = datetime.fromisoformat(last_ping.replace('Z', '+00:00'))
+                if (now - last_ping_dt).total_seconds() < 10:
+                    should_ping = False
+            except:
+                pass
+        
+        if should_ping and server.get("host"):
+            try:
+                stats = await loop.run_in_executor(
+                    None,
+                    get_server_stats_via_ssh,
+                    server.get('host'),
+                    server.get('ssh_port', 22),
+                    server.get('ssh_user', 'root'),
+                    server.get('ssh_password'),
+                    server.get('ssh_key')
+                )
+                # Update server in DB
+                await db.attack_servers.update_one(
+                    {"id": server["id"]},
+                    {"$set": {
+                        "status": stats.get("status", "offline"),
+                        "cpu_usage": stats.get("cpu_usage", 0),
+                        "ram_used": stats.get("ram_used", 0),
+                        "ram_total": stats.get("ram_total", 0),
+                        "cpu_model": stats.get("cpu_model", "Unknown"),
+                        "cpu_cores": stats.get("cpu_cores", 1),
+                        "uptime": stats.get("uptime", "N/A"),
+                        "last_ping": now.isoformat()
+                    }}
+                )
+                # Update local server data
+                server.update(stats)
+                server["last_ping"] = now.isoformat()
+            except Exception as e:
+                logger.error(f"Failed to ping server {server.get('name')}: {e}")
+    
     online_servers = [s for s in servers if s.get("status") == "online"]
     
     total_capacity = sum(s.get("max_concurrent", 0) for s in online_servers)
