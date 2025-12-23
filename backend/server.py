@@ -999,8 +999,6 @@ async def admin_ping_all_servers(admin: dict = Depends(get_admin_user)):
             results.append({"name": server.get("name"), "status": "error", "error": str(e)})
     
     return {"servers": results, "pinged_at": now.isoformat()}
-        raise HTTPException(status_code=404, detail="Server not found")
-    return {"message": "Server deleted"}
 
 @api_router.post("/admin/servers/{server_id}/ping")
 async def admin_ping_server(server_id: str, admin: dict = Depends(get_admin_user)):
