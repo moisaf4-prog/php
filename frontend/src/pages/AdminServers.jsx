@@ -127,10 +127,15 @@ export default function AdminServers() {
       const res = await axios.post(`${API}/admin/servers/${serverId}/ping`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      toast.success(`Status: ${res.data.status}, CPU: ${res.data.cpu_usage}%, RAM: ${res.data.ram_used}GB`);
+      const { status, cpu_usage, ram_used, ram_total, cpu_model, error } = res.data;
+      if (error) {
+        toast.warning(`Status: ${status} - ${error}`);
+      } else {
+        toast.success(`Status: ${status} | CPU: ${cpu_usage}% | RAM: ${ram_used}/${ram_total}GB${cpu_model ? ` | ${cpu_model}` : ''}`);
+      }
       fetchData();
     } catch (err) {
-      toast.error("Failed to ping");
+      toast.error("Failed to ping server");
     }
   };
 
