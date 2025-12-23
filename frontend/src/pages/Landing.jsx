@@ -299,7 +299,7 @@ export default function Landing() {
                   const loadPercent = server.max_concurrent ? (server.load / server.max_concurrent) * 100 : 0;
                   return (
                     <motion.div key={idx} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }} className="bg-slate-900 rounded-xl p-5 border border-slate-800">
-                      <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div className={`w-2.5 h-2.5 rounded-full ${server.status === "online" ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`} />
                           <span className="font-medium text-slate-100">{server.name}</span>
@@ -308,6 +308,19 @@ export default function Landing() {
                           {server.status}
                         </span>
                       </div>
+                      
+                      {/* CPU Model */}
+                      {server.cpu_model && server.cpu_model !== "N/A" && (
+                        <div className="mb-3 p-2 bg-slate-800/50 rounded-lg">
+                          <div className="flex items-center gap-2">
+                            <Cpu className="w-4 h-4 text-blue-400" />
+                            <span className="text-xs text-blue-400 font-medium truncate">
+                              {server.cpu_model} {server.cpu_cores ? `(${server.cpu_cores} Cores)` : ''}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
                       <div className="mb-3">
                         <div className="flex justify-between text-xs text-slate-400 mb-1">
                           <span>Load</span>
@@ -318,15 +331,25 @@ export default function Landing() {
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="flex items-center gap-2">
-                          <Cpu className="w-4 h-4 text-slate-500" />
-                          <span className="text-slate-400">CPU:</span>
-                          <span className="text-slate-100 font-medium">{server.cpu_usage || 0}%</span>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Cpu className="w-3.5 h-3.5 text-slate-500" />
+                            <span className="text-slate-400 text-xs">CPU</span>
+                            <span className="text-slate-100 font-medium text-xs">{server.cpu_usage || 0}%</span>
+                          </div>
+                          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div className={`h-full transition-all ${server.cpu_usage > 80 ? 'bg-red-500' : server.cpu_usage > 50 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${server.cpu_usage || 0}%` }} />
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <HardDrive className="w-4 h-4 text-slate-500" />
-                          <span className="text-slate-400">RAM:</span>
-                          <span className="text-slate-100 font-medium">{server.ram_used || 0}/{server.ram_total || 0}GB</span>
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <HardDrive className="w-3.5 h-3.5 text-slate-500" />
+                            <span className="text-slate-400 text-xs">RAM</span>
+                            <span className="text-slate-100 font-medium text-xs">{server.ram_used || 0}/{server.ram_total || 0}GB</span>
+                          </div>
+                          <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                            <div className={`h-full transition-all ${(server.ram_used / server.ram_total * 100) > 80 ? 'bg-red-500' : (server.ram_used / server.ram_total * 100) > 50 ? 'bg-amber-500' : 'bg-emerald-500'}`} style={{ width: `${server.ram_total ? (server.ram_used / server.ram_total * 100) : 0}%` }} />
+                          </div>
                         </div>
                       </div>
                     </motion.div>
