@@ -948,6 +948,55 @@ async def admin_update_server(server_id: str, data: ServerUpdate, admin: dict = 
 async def admin_delete_server(server_id: str, admin: dict = Depends(get_admin_user)):
     result = await db.attack_servers.delete_one({"id": server_id})
     if result.deleted_count == 0:
+
+@api_router.post("/admin/servers/ping-all")
+async def admin_ping_all_servers(admin: dict = Depends(get_admin_user)):
+    """Ping all active servers and update their stats"""
+    servers = await db.attack_servers.find({"is_active": True}, {"_id": 0}).to_list(100)
+    results = []
+    loop = asyncio.get_event_loop()
+    now = datetime.now(timezone.utc)
+    
+    for server in servers:
+        if not server.get("host"):
+            results.append({"name": server.get("name"), "status": "error", "error": "No host configured"})
+            continue
+            
+        try:
+            stats = await loop.run_in_executor(
+                None,
+                get_server_stats_via_ssh,
+                server.get('host'),
+                server.get('ssh_port', 22),
+                server.get('ssh_user', 'root'),
+                server.get('ssh_password'),
+                server.get('ssh_key')
+            )
+            
+            await db.attack_servers.update_one(
+                {"id": server["id"]},
+                {"$set": {
+                    "status": stats.get("status", "offline"),
+                    "cpu_usage": stats.get("cpu_usage", 0),
+                    "ram_used": stats.get("ram_used", 0),
+                    "ram_total": stats.get("ram_total", 0),
+                    "cpu_model": stats.get("cpu_model", "Unknown"),
+                    "cpu_cores": stats.get("cpu_cores", 1),
+                    "uptime": stats.get("uptime", "N/A"),
+                    "last_ping": now.isoformat()
+                }}
+            )
+            
+            results.append({
+                "name": server.get("name"),
+                "status": stats.get("status"),
+                "cpu_usage": stats.get("cpu_usage"),
+                "uptime": stats.get("uptime")
+            })
+        except Exception as e:
+            results.append({"name": server.get("name"), "status": "error", "error": str(e)})
+    
+    return {"servers": results, "pinged_at": now.isoformat()}
         raise HTTPException(status_code=404, detail="Server not found")
     return {"message": "Server deleted"}
 
