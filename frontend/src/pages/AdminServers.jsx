@@ -538,6 +538,30 @@ export default function AdminServers() {
                           ))}
                         </div>
                       </div>
+                      
+                      {/* Start/Stop Command Templates */}
+                      <div className="space-y-3 pt-3 border-t border-slate-700">
+                        <Label className="text-sm font-medium text-slate-100">Command Templates</Label>
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-slate-500">Start Command</Label>
+                            <Input 
+                              value={editingServer.start_command || "screen -dmS {screen_name} {command}"} 
+                              onChange={(e) => setEditingServer(prev => ({ ...prev, start_command: e.target.value }))} 
+                              className="bg-slate-800 border-slate-700 text-slate-100 font-mono text-xs" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-slate-500">Stop Command</Label>
+                            <Input 
+                              value={editingServer.stop_command || "pkill -9 -f '{screen_name}'"} 
+                              onChange={(e) => setEditingServer(prev => ({ ...prev, stop_command: e.target.value }))} 
+                              className="bg-slate-800 border-slate-700 text-slate-100 font-mono text-xs" 
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-slate-500">Variables: {"{screen_name}"}, {"{command}"}, {"{username}"}, {"{attack_id}"}</p>
+                      </div>
                     </div>
                   ) : (
                     /* View Mode */
