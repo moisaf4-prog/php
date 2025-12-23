@@ -36,6 +36,87 @@ api_router = APIRouter(prefix="/api")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ==================== SSH HELPER FUNCTIONS ====================
+
+def get_server_stats_via_ssh(host: str, port: int, username: str, password: str = None, ssh_key: str = None, timeout: int = 10) -> dict:
+    """
+    Connect to server via SSH and get real CPU/RAM stats and CPU model.
+    Returns dict with status, cpu_usage, ram_used, ram_total, cpu_model
+    """
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    
+    try:
+        # Connect using password or key
+        if ssh_key:
+            from io import StringIO
+            key = paramiko.RSAKey.from_private_key(StringIO(ssh_key))
+            ssh.connect(host, port=port, username=username, pkey=key, timeout=timeout)
+        else:
+            ssh.connect(host, port=port, username=username, password=password, timeout=timeout)
+        
+        stats = {"status": "online"}
+        
+        # Get CPU usage (1 second average)
+        stdin, stdout, stderr = ssh.exec_command("top -bn1 | grep 'Cpu(s)' | awk '{print $2}' | cut -d'%' -f1", timeout=5)
+        cpu_output = stdout.read().decode().strip()
+        try:
+            # Try different parsing methods for various Linux distributions
+            if cpu_output:
+                stats["cpu_usage"] = round(float(cpu_output), 1)
+            else:
+                # Alternative method using /proc/stat
+                stdin, stdout, stderr = ssh.exec_command("cat /proc/stat | head -1 | awk '{usage=($2+$4)*100/($2+$4+$5)} END {print usage}'", timeout=5)
+                cpu_alt = stdout.read().decode().strip()
+                stats["cpu_usage"] = round(float(cpu_alt), 1) if cpu_alt else 0
+        except:
+            stats["cpu_usage"] = 0
+        
+        # Get RAM info from /proc/meminfo
+        stdin, stdout, stderr = ssh.exec_command("cat /proc/meminfo | head -3", timeout=5)
+        mem_output = stdout.read().decode().strip()
+        try:
+            lines = mem_output.split('\n')
+            mem_total = int(lines[0].split()[1]) / 1024 / 1024  # Convert to GB
+            mem_free = int(lines[1].split()[1]) / 1024 / 1024
+            # Check for MemAvailable (more accurate)
+            if len(lines) > 2 and 'MemAvailable' in lines[2]:
+                mem_available = int(lines[2].split()[1]) / 1024 / 1024
+                mem_used = mem_total - mem_available
+            else:
+                mem_used = mem_total - mem_free
+            
+            stats["ram_total"] = round(mem_total, 1)
+            stats["ram_used"] = round(mem_used, 1)
+        except:
+            stats["ram_total"] = 0
+            stats["ram_used"] = 0
+        
+        # Get CPU model
+        stdin, stdout, stderr = ssh.exec_command("cat /proc/cpuinfo | grep 'model name' | head -1 | cut -d':' -f2", timeout=5)
+        cpu_model = stdout.read().decode().strip()
+        stats["cpu_model"] = cpu_model if cpu_model else "Unknown CPU"
+        
+        # Get CPU cores count
+        stdin, stdout, stderr = ssh.exec_command("nproc", timeout=5)
+        cores = stdout.read().decode().strip()
+        stats["cpu_cores"] = int(cores) if cores.isdigit() else 1
+        
+        ssh.close()
+        return stats
+        
+    except paramiko.AuthenticationException:
+        return {"status": "offline", "error": "Authentication failed", "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A"}
+    except paramiko.SSHException as e:
+        return {"status": "offline", "error": f"SSH error: {str(e)}", "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A"}
+    except Exception as e:
+        return {"status": "offline", "error": str(e), "cpu_usage": 0, "ram_used": 0, "ram_total": 0, "cpu_model": "N/A"}
+    finally:
+        try:
+            ssh.close()
+        except:
+            pass
+
 # ==================== MODELS ====================
 
 class UserRegister(BaseModel):
