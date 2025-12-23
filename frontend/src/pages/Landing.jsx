@@ -454,16 +454,16 @@ export default function Landing() {
                     
                     <div className="space-y-2 text-sm mb-4 pb-4 border-b border-slate-800">
                       <div className="flex justify-between">
-                        <span className="text-slate-500">Duration</span>
-                        <span className="text-slate-300 font-medium">{formatTime(plan.max_time)}</span>
+                        <span className="text-slate-500">Max Time</span>
+                        <span className="text-slate-300 font-medium">{formatTime(plan.max_time)}/attack</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Concurrent</span>
-                        <span className="text-slate-300 font-medium">{plan.max_concurrent}</span>
+                        <span className="text-slate-300 font-medium">{plan.max_concurrent} attacks</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-slate-500">Methods</span>
-                        <span className="text-slate-300 font-medium">{plan.methods?.length || 0}</span>
+                        <span className="text-slate-300 font-medium">{plan.methods?.length || 0} available</span>
                       </div>
                     </div>
                     
