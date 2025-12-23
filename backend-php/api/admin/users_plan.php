@@ -8,11 +8,14 @@ requireAdmin();
 $userId = $_REQUEST['user_id'] ?? '';
 $data = getJsonBody();
 
+// Support query param OR body
+$planId = $_GET['plan_id'] ?? $data['plan'] ?? null;
+
 if (empty($userId)) {
     errorResponse('User ID required', 400);
 }
 
-if (!isset($data['plan'])) {
+if (!$planId) {
     errorResponse('Plan required', 400);
 }
 
@@ -23,7 +26,7 @@ if (!$user) {
 }
 
 // Check if plan exists
-$plan = db()->fetchOne("SELECT id, duration_days FROM plans WHERE id = ?", [$data['plan']]);
+$plan = db()->fetchOne("SELECT id, duration_days FROM plans WHERE id = ?", [$planId]);
 if (!$plan) {
     errorResponse('Plan not found', 404);
 }
@@ -35,7 +38,7 @@ if ($plan['duration_days'] > 0) {
 }
 
 db()->update('users', [
-    'plan' => $data['plan'],
+    'plan' => $planId,
     'plan_expires' => $planExpires
 ], 'id = ?', [$userId]);
 
